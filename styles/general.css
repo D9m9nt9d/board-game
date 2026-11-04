@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  text-align: center;
+  display: flex;
+}
+
+html {
+  scrollbar-width: 5px;
+  background-color: rgb(66, 96, 74);
+  scrollbar-color: rgb(56, 83, 64) rgb(66, 96, 74);
+}
