@@ -12,6 +12,14 @@ function getId() {
   return id
 }
 
+function arrayRemove(arr, value) {
+  let index = arr.indexOf(value);
+  if (index > -1) {
+    arr.splice(index, 1);
+  }
+  return arr;
+}
+
 // Items
 
 let activeZone = null;
@@ -34,10 +42,20 @@ const items = {
   sword: {
     image: '/assets/images/sword.png',
     description: 'deals 10 gazzilion dmg, dissapers on use',
-    usableOn: 'zone',
+    usableOn: 'entity',
     onUse: (element, item) => {
       console.log(`${item.id} was used on ${element.id}`)
       removeItem(item.id)
+      removeEntity(element.id)
+    }
+  },
+  move: {
+    image: '/assets/images/move.png',
+    description: 'drag this onto the square you want to move to',
+    usableOn: 'square',
+    onUse: (element, item) => {
+      console.log(`${item.id} was used on ${element.id}`)
+      moveEntity(playerId, element.id)
     }
   }
 }
@@ -56,12 +74,13 @@ function addItem(name) {
   `
   inventoryDiv.append(itemSlot)
 
-  const id = 'ITEM'+getId()
+  const id = 'ITEM' + getId()
 
   const item = itemSlot.querySelector('img')
   item.id = id
-  
+
   inventory[id] = {
+    type: name,
     itemSlot: itemSlot,
     dragRef: hcgDraggable(item, {
       revert: true,
@@ -93,9 +112,11 @@ function removeItem(id) {
   const item = inventory[id]
   item.dragRef.destroy()
   item.itemSlot.remove()
+  delete inventory[id]
 }
 
 addItem('sword')
+addItem('move')
 
 // Board
 
@@ -104,57 +125,196 @@ const board = document.getElementById('board')
 function createBlankSquare() {
   const newSquare = document.createElement('div')
   newSquare.classList.add('square-default')
-  newSquare.classList.add('zone')
+  newSquare.classList.add('square')
   newSquare.style.margin = `${random(5, 50)}px ${random(5, 50)}px ${random(5, 50)}px ${random(5, 50)}px`
   board.append(newSquare)
   return newSquare
 }
 
 const square_types = {
-  'default': () => {
-    return createBlankSquare()
-  },
-  'text': (label, description) => {
-    const newSquare = createBlankSquare()
-    newSquare.innerHTML = `
-      <span class="label">Hello WORLD</span>
-      <span class="description">Lorem ipsum dolor sit amet consectetur adipisicing elit.</span>
+  'text': (square, args) => {
+    square.innerHTML += `
+      <div class="square-text">
+        <span class="label">${args.label}</span>
+        <span class="description">${args.description}</span>
+      </div>
     `
-    return newSquare
+    return square
   },
 }
 
-function createSquare(type, x, y) {
+function addType(square, type, args) {
   if (!square_types[type]) {
-    console.warn('Bad square type ' + type);
+    console.warn('Invalid square type: ' + type);
     return
   }
 
-  return square_types[type]()
+  square_types[type](square, args)
+}
+
+const squares = []
+
+function createSquare(types = {}) {
+  const square = createBlankSquare()
+
+  for (const type in types) {
+    const args = types[type]
+    addType(square, type, args)
+  }
+
+  const id = 'SQUARE' + getId()
+  square.id = id
+  squares[id] = {
+    element: square,
+    entities: [],
+  }
+
+  return square
+}
+
+function removeSquare(id) {
+  const square = squares[id]
+  square.element.remove()
+
+  square.entities.forEach(function(id) {
+    removeEntity(id)
+  })
+
+  delete squares[id]
+}
+
+const Default = {}
+const Texted = {
+  text: {
+    label: 'Text',
+    description: 'this square has some text in it'
+  }
 }
 
 const map = {
-  1: ['default'],
-  2: ['default', 'default', 'default', 'default'],
-  3: ['default', 'text', 'default'],
-  4: ['default', 'default', 'default', 'default'],
-  5: ['default', 'default'],
-  6: ['default', 'default', 'default', 'default'],
-  7: ['default']
+  1: [ Default ],
+  2: [ Default, Default, Default ],
+  3: [ Default, Texted, Default ],
+  4: [ Default, Default, Default, Default ],
+  5: [ Default, Texted ],
+  6: [ Default, Default, Default, Default ],
+  7: [ Default ]
 }
-
-// createSquare('default')
-// createSquare('text')
 
 for (const rowNum in map) {
-  const rowSquares = map[rowNum]
   const row = document.createElement('div')
   row.classList.add('board-row')
-  board.append(row)
-  rowSquares.forEach(element => {
-    const newSquare = createSquare(element)
+  
+  const rowSquares = map[rowNum]
+  rowSquares.forEach(types => {
+    const newSquare = createSquare(types)
     row.append(newSquare)
   });
+  
+  board.append(row)
 }
+
+// Entities
+
+const entity_types = {
+  player: {
+    create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot')
+      element.classList.add('left')
+      element.innerHTML = `<img src="assets/images/man.png" class="
+        entity 
+        alive
+      " draggable=false></img>`
+
+      return element
+    },
+    maxHealth: 100,
+    onDied: (id, entity) => {
+      console.log(id + ' died')
+    }
+  },
+  enemy: {
+     create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot')
+      element.classList.add('right')
+      element.innerHTML = `<img src="assets/images/evil-man.png" class="
+        entity 
+        alive
+        enemy
+      " draggable=false></img>`
+
+      return element
+    },
+    maxHealth: 20,
+  },
+}
+
+const entities = {}
+
+function createEntity(type, squareId) {
+  const entityInfo = entity_types[type]
+
+  const element = entityInfo.create()
+
+  const id = 'ENTITY' + getId()
+
+  const entity = element.querySelector('.entity')
+  entity.id = id
+
+  entities[id] = {
+    type: type,
+    element: element,
+    health: entityInfo.maxHealth,
+    standingOn: squareId,
+  }
+
+  const square = squares[squareId]
+  square.element.append(element)
+  square.entities.push(id)
+
+  return id
+}
+
+function moveEntity(id, squareId) {
+  const entity = entities[id]
+  if (!entity) {
+    console.warn('Invalid entity id: '+id) 
+    return
+  }
+  
+  const standingOn = squares[entity.standingOn]
+  arrayRemove(standingOn.entities, id)
+
+  const newSquare = squares[squareId]
+  entity.standingOn = squareId
+  newSquare.entities.push(id)
+
+  newSquare.element.append(entity.element)
+}
+
+function removeEntity(id, fireDie = true) {
+  const entity = entities[id]
+  if (!entity) {
+    console.warn('Invalid entity id: '+id) 
+    return
+  }
+  
+  if (fireDie) {
+    const onDied = entity_types[entity.type].onDied
+    if (onDied) onDied(id, entity)
+  }
+
+  const standingOn = squares[entity.standingOn]
+  arrayRemove(standingOn.entities, id)
+
+  entity.element.remove()
+
+  delete entities[id]
+}
+
+const playerId = createEntity('player', document.querySelector('.square-default').id)
+createEntity('enemy', document.querySelector('.square-default').id)
 
 console.log('main.js loaded')
