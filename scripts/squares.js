@@ -1,0 +1,268 @@
+// squares are spaces that you can step on that contain entities
+
+import { random, getId, randomFromArray, arrayRemove } from "./utils.js"
+import { createEntity, removeEntity, enemies } from "./entities.js"
+
+const squares = {}
+
+const board = document.getElementById('board')
+
+function createBlankSquare() {
+  const newSquare = document.createElement('div')
+  newSquare.classList.add('square-default')
+  newSquare.classList.add('square')
+  newSquare.style.margin = `${random(20, 120)}px ${random(10, 70)}px ${random(20, 120)}px ${random(10, 70)}px`
+  board.append(newSquare)
+  return newSquare
+}
+
+const square_types = {
+  'text': {
+    func: (squareId, square, args) => {
+      square.element.innerHTML += `
+      <div class="square-text">
+        <span class="label">${args.label}</span>
+        <span class="description">${args.description}</span>
+      </div>`
+    },
+    onStepped: (entityId, squareId) => {
+      console.log(entityId, 'stepped on', squareId)
+    },
+  },
+  'spawner': {
+    func: (squareId, square, args) => {
+      square.element.classList.add('spawner')
+    },
+    onStepped: (_, squareId) => {
+      createEntity(randomFromArray(enemies), squareId)
+    }
+  },
+  'withEnemy': {
+    func: (squareId, square, args) => {
+      createEntity(randomFromArray(enemies), squareId)
+    },
+  },
+  'withLoot': {
+    func: (squareId, square, args) => {
+      createEntity(randomFromArray(enemies), squareId)
+    },
+  },
+}
+
+const squares_pool = {
+  Default: { content: {}, chance: 50 },
+  Enemied: { content: { withEnemy: {} }, chance: 30 },
+  Spawner: { content: { spawner: {} }, chance: 20 },
+}
+
+function addType(squareId, type, args) {
+  const typeInfo = square_types[type]
+  if (!typeInfo) {
+    console.warn('Invalid square type: ' + type);
+    return
+  }
+
+  const square = squares[squareId]
+  if (!square) {
+    console.warn('Invalid square id' + squareId)
+  }
+
+  typeInfo.func && typeInfo.func(squareId, square, args)
+  typeInfo.onStepped && square.onStepped.push(typeInfo.onStepped)
+}
+
+function createSquare(types = {}, row = 0) {
+  const square = createBlankSquare()
+
+  const id = 'SQUARE' + getId()
+  square.id = id
+  squares[id] = {
+    element: square,
+    row: row,
+    entities: [],
+    connections: [],
+    onStepped: []
+  }
+
+  for (const type in types) {
+    const args = types[type]
+    addType(id, type, args)
+  }
+
+  return square
+}
+
+function removeSquare(id) {
+  const square = squares[id]
+  square.element.classList.remove('square')
+  square.element.style.visibility = 'hidden'
+
+  square.connections.forEach(otherId => {
+    const other = squares[otherId]
+    arrayRemove(other.connections, id)
+  })
+
+  square.entities.forEach(id => {
+    removeEntity(id)
+  })
+
+  delete squares[id]
+
+  drawPaths()
+}
+
+function pickSquare(pool) {
+  const squares = Object.values(pool)
+  const total = squares.reduce((sum, sq) => sum + sq.chance, 0)
+
+  let roll = Math.random() * total
+  for (const sq of squares) {
+    roll -= sq.chance
+    if (roll < 0) return sq.content
+  }
+}
+
+function generateMap(rows, min = 1, max = 4) {
+  const generated = { 1: [squares_pool.Default.content] }
+
+  for (let rowNum = 2; rowNum <= rows - 1; rowNum++) {
+    const count = random(min, max)
+    generated[rowNum] = Array.from({ length: count }, () => pickSquare(squares_pool))
+  }
+
+  generated[rows] = [squares_pool.Default.content]
+
+  return generated
+}
+
+function drawMap(map) {
+  let firstSquareId = null
+
+  for (const rowNum in map) {
+    const row = document.createElement('div')
+    row.classList.add('board-row')
+    row.id = 'ROW'+rowNum
+
+    const rowSquares = map[rowNum]
+    rowSquares.forEach(types => {
+      const newSquare = createSquare(types, Number(rowNum))
+      row.append(newSquare)
+      if (!firstSquareId) firstSquareId = newSquare.id
+    });
+
+    board.append(row)
+  }
+
+  return firstSquareId
+}
+
+function connectSquares(idA, idB) {
+  if (idA === idB) return false
+  const a = squares[idA]
+  const b = squares[idB]
+  if (a.connections.includes(idB)) return false
+
+  a.connections.push(idB)
+  b.connections.push(idA)
+  return true
+}
+
+function generatePaths(randomness = 0.5) {
+  // rows left to right
+  const rows = {}
+  for (const id in squares) {
+    const rect = squares[id].element.getBoundingClientRect();
+    const row = rows[squares[id].row] ??= []
+    row.push({ id, x: rect.left + rect.width / 2 })
+  }
+  const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b)
+  rowKeys.forEach(r => rows[r].sort((a, b) => a.x - b.x))
+
+  // link each row to the one below it
+  for (let k = 0; k < rowKeys.length - 1; k++) {
+    const A = rows[rowKeys[k]]
+    const B = rows[rowKeys[k + 1]]
+
+    let i = 0, j = 0
+    connectSquares(A[i].id, B[j].id)
+
+    // go both rows at once, so always stepping toward the closer neighbor
+    while (i < A.length - 1 || j < B.length - 1) {
+      if (i === A.length - 1) j++
+      else if (j === B.length - 1) i++
+      else {
+        let stepA = Math.abs(A[i + 1].x - B[j].x) < Math.abs(A[i].x - B[j + 1].x)
+        if (Math.random() < randomness) stepA = !stepA
+        stepA ? i++ : j++
+      }
+      connectSquares(A[i].id, B[j].id)
+    }
+  }
+}
+
+function randomColor(min = 170, max = 240) {
+  const v = random(min, max)
+  return `rgb(${v}, ${v}, ${v})`
+}
+
+function drawPaths() {
+  const oldPaths = board.querySelector('svg.paths')
+  if (oldPaths) oldPaths.remove()
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.classList.add('paths')
+  board.prepend(svg)
+
+  const boardRect = board.getBoundingClientRect()
+
+  for (const id in squares) {
+    squares[id].connections.forEach(otherId => {
+      if (id > otherId) return // draw each path once it ignores letters
+      const [up, down] = squares[id].row <= squares[otherId].row ? [id, otherId] : [otherId, id]
+      const a = squares[up].element.getBoundingClientRect()
+      const b = squares[down].element.getBoundingClientRect()
+      const x1 = a.left - boardRect.left + a.width / 2, y1 = a.bottom - boardRect.top
+      const x2 = b.left - boardRect.left + b.width / 2, y2 = b.top - boardRect.top
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1)
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2)
+      line.setAttribute('stroke', randomColor())
+      line.setAttribute('stroke-width', '5px')
+      svg.append(line)
+    })
+  }
+}
+
+function distanceBetween(idOne, idTwo) {
+  const seen = new Set([idOne]) // array with no repetitions and has instead of includes
+  let frontier = [idOne]
+  let dist = 0
+
+  while (frontier.length) {
+    if (frontier.includes(idTwo)) return dist
+    const next = []
+    for (const id of frontier) {
+      for (const n of squares[id].connections) {
+        if (!seen.has(n)) {
+          seen.add(n)
+          next.push(n)
+        }
+      }
+    }
+    frontier = next
+    dist++
+  }
+  return Infinity
+}
+
+function areConnected(idOne, idTwo, between = 0) {
+  return distanceBetween(idOne, idTwo) === between + 1
+}
+
+export {
+  squares,
+  generateMap, drawMap,
+  generatePaths, drawPaths,
+  createSquare, removeSquare, connectSquares,
+  areConnected, distanceBetween,
+}

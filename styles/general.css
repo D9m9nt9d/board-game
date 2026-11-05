@@ -10,3 +10,22 @@ html {
   background-color: rgb(66, 96, 74);
   scrollbar-color: rgb(56, 83, 64) rgb(66, 96, 74);
 }
+
+.notification {
+  position: fixed;
+  color: aliceblue;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  font-size: larger;
+  top: 15vh;
+  right: 0;
+  left: 0;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 500;
+  transition-duration: 7000ms;
+  transition-timing-function: linear;
+}
+.notification.animate {
+  opacity: 0;
+  top: 10vh;
+}

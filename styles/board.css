@@ -1,8 +1,8 @@
 #board {
-  height: 500vh;
-  min-width: 800px;
+  min-height: 100vh;
   flex-grow: 1;
   padding-top: 5vh;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,18 +12,21 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  width: 800px;
+  min-width: 800px;
 }
 
 .square {
   position: relative;
 }
-
+/* different square types */ 
 .square-default {
-  /* background: radial-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.2)); */
   background-color: rgb(233, 233, 242);
   border-radius: 16px;
   border: 2px solid rgb(51, 52, 53);
+}
+
+.spawner {
+  background: radial-gradient(rgba(233, 233, 242, 1), rgba(233, 233, 242, 0.5));
 }
 
 .square-default, .square-text {
@@ -66,9 +69,34 @@
   right: 0px
 }
 
-.entity-slot, .entity {
+.entity-slot {
   height: 90px;
   width: 90px;
+}
+.entity-slot-small {
+  height: 60px;
+  width: 60px;
+}
+.entity {
+  height: 100%;
+  width: 100%;
+}
+
+.equipped-item {
+  position: absolute;
+  height: 45px;
+  width: 45px;
+}
+
+.health-label {
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 100%;
+  height: 18%;
+  color: #f0ca98;
+  text-shadow: -1px -1px 0 #927856, 1px -1px 0 #927856, -1px 1px 0 #927856, 1px 1px 0 #927856;
+  opacity: 1;
 }
 
 /* Items (hover) */
@@ -89,4 +117,14 @@
 }
 .entity.hover {
   outline-color: rgb(255, 255, 255);
+}
+
+.paths {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  pointer-events:none;
+  stroke-linecap:round;
 }
