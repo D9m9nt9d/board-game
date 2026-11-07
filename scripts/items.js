@@ -10,7 +10,7 @@ const items = {}
 
 const item_types = {
   move: {
-    image: '/assets/images/move.png',
+    image: 'assets/images/move.png',
     description: 'drag this onto the square you want to move to',
     usableOn: 'square',
     onUse: (element, item) => {
@@ -24,7 +24,7 @@ const item_types = {
     otherMoves: 2,
   },
   sneak: {
-    image: '/assets/images/sneak.png',
+    image: 'assets/images/sneak.png',
     description: 'sneak past enemies',
     usableOn: 'square',
     onUse: (element, item) => {
@@ -38,7 +38,7 @@ const item_types = {
     uses: 1,
   },
   sword: {
-    image: '/assets/images/sword.png',
+    image: 'assets/images/sword.png',
     description: 'deals 5 damage, everyone moves 1 turn',
     usableOn: 'enemy',
     onUse: (element, item) => {
@@ -66,7 +66,7 @@ const item_types = {
     otherMoves: 1,
   },
   apple: {
-    image: '/assets/images/apple.png',
+    image: 'assets/images/apple.png',
     description: 'drag this onto yourself to heal for 20 health',
     usableOn: 'player',
     onUse: (element, item) => {
@@ -82,7 +82,7 @@ const item_types = {
     uses: 1,
   },
   nuke: {
-    image: '/assets/images/nuke.png',
+    image: 'assets/images/nuke.png',
     description: 'removes a space',
     usableOn: 'square',
     onUse: (element, item) => {
@@ -92,7 +92,7 @@ const item_types = {
     uses: 1,
   },
   rope: {
-    image: '/assets/images/vibrant-rope.png',
+    image: 'assets/images/vibrant-rope.png',
     description: 'connect a space with the space your standing on',
     usableOn: 'square',
     onUse: (element, item) => {
@@ -113,7 +113,7 @@ const item_types = {
     uses: 2,
   },
   scissors: {
-    image: '/assets/images/scissors.png',
+    image: 'assets/images/scissors.png',
     description: 'removes a path',
     usableOn: 'connection',
     onUse: (element, item) => {
@@ -129,7 +129,7 @@ const item_types = {
     uses: 3,
   },
   coin: {
-    image: '/assets/images/coin.png',
+    image: 'assets/images/coin.png',
     description: "use this to befriend a goblin (it won't attack you)",
     usableOn: 'goblin',
     onUse: (element, item) => {
@@ -146,7 +146,7 @@ const item_types = {
     uses: 1,
   },
   amulet: {
-    image: '/assets/images/inuit-amulet.png',
+    image: 'assets/images/inuit-amulet.png',
     description: 'respawn from the dead',
     usableOn: 'square',
     onUse: (element, item) => {
