@@ -185,6 +185,12 @@ function createEntity(type, squareId) {
   square.element.append(element)
   square.entities.push(id)
 
+  setTimeout(() => {
+    square.onStepped.forEach(func => {
+      func(id, squareId)
+    })
+  }, 0);
+
   return id
 }
 
@@ -276,7 +282,7 @@ function damageEntity(id, amount = 2,
 
   const time = before()
   setTimeout(() => {
-    setHealth(id, entity.health - amount, true)
+    setHealth(id, entity.health-amount, true)
     after()
   }, time);
 }

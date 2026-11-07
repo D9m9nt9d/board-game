@@ -17,6 +17,16 @@ addItem('sword')
 // addItem('amulet')
 addItem('coin')
 
+// Entities
+
+let playerId = 'ENTITY0'
+
+function changePlayerId(newId) {
+  playerId = newId
+}
+
+export {playerId, changePlayerId}
+
 // Board
 
 const map = generateMap(100)
@@ -27,14 +37,8 @@ drawPaths()
 window.addEventListener('load', drawPaths)
 window.addEventListener('resize', drawPaths)
 
-// Entities
+// Create player
 
-let playerId = createEntity('player', firstSquareId)
-
-function changePlayerId(newId) {
-  playerId = newId
-}
-
-export {playerId, changePlayerId}
+changePlayerId(createEntity('player', firstSquareId))
 
 console.log('main.js loaded')

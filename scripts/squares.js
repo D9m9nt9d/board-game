@@ -11,6 +11,7 @@ const board = document.getElementById('board')
 
 function createBlankSquare() {
   const newSquare = document.createElement('div')
+  newSquare.innerHTML = '<div class="square-text"></div>'
   newSquare.classList.add('square-default')
   newSquare.classList.add('square')
   newSquare.style.margin = `${random(20, 120)}px ${random(10, 70)}px ${random(20, 120)}px ${random(10, 70)}px`
@@ -19,11 +20,9 @@ function createBlankSquare() {
 }
 
 function addText(square, label, description) {
-  square.element.innerHTML += `
-  <div class="square-text">
+  square.element.querySelector('.square-text').innerHTML += `
     <span class="label">${label}</span>
-    <span class="description">${description}</span>
-  </div>`
+    <span class="description">${description}</span>`
 }
 
 function pickItem(items) {
@@ -38,6 +37,7 @@ function pickItem(items) {
 }
 
 // 100 = always, 1 = 1/100
+// onStepped will also run in this order unless addType was called later on
 const square_types = {
   'default': {
     chance: 100,
@@ -106,10 +106,24 @@ const square_types = {
       square.element.append(div)
     },
     onStepped: (entityId, _) => {
+      console.log(entityId)
       damageEntity(entityId, -100)
     },
     chance: 5,
-  }
+  },
+  'dmg': {
+    func: (squareId, square, args) => {
+      addText(square, 'Bad square', "Randomly damages anyone that steps on this square")
+      const div = document.createElement('div')
+      div.classList.add('dmg')
+      div.classList.add('full-square')
+      square.element.append(div)
+    },
+    onStepped: (entityId, _) => {
+      damageEntity(entityId, random(5,25))
+    },
+    chance: 3,
+  },
 }
 
 function addType(squareId, type) {
