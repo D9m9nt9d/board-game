@@ -4,6 +4,10 @@ function random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function clamp(num, min, max) {
+  return Math.min(Math.max(num, min), max)
+} 
+
 let id = 0
 function getId() {
   id++
@@ -48,6 +52,6 @@ function distanceBetweenInPixels(el1, el2) {
 }
 
 export {
-  random, arrayRemove, randomFromArray,
+  random, clamp, arrayRemove, randomFromArray,
   getId, notify, distanceBetweenInPixels
 }

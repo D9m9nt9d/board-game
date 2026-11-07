@@ -10,6 +10,8 @@ addItem('sword')
 addItem('move')
 addItem('nuke')
 addItem('rope')
+addItem('apple')
+addItem('scissors')
 
 // Board
 

@@ -1,7 +1,8 @@
 // entities are anything that is on the square
 
-import { random, getId, arrayRemove } from "./utils.js"
-import { squares } from "./squares.js"
+import { random, getId, arrayRemove, clamp } from "./utils.js"
+import { squares, areConnected } from "./squares.js"
+import { disableInventory, enableInventory } from "./items.js"
 
 const entities = {}
 
@@ -12,7 +13,8 @@ const entity_types = {
       element.classList.add('entity-slot') // for bigger enemies change entity-slot to entity-slot-big and then in css change it too
       element.classList.add('left')
       element.innerHTML = `<img src="assets/images/man.png" class="
-        entity 
+        entity
+        player
         alive
       " draggable=false></img>
       <span class="health-label"></span>
@@ -27,6 +29,7 @@ const entity_types = {
       return element
     },
     maxHealth: 100,
+    onDamaged: defaultOnDmged,
     onDied: (id, entity) => {
       console.log(id + ' died')
     }
@@ -56,6 +59,16 @@ const entity_types = {
     },
     maxHealth: 20,
     onDamaged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      const entity = entities[entityId]
+      const player = entities[playerId]
+
+      if (entity.standingOn == player.standingOn) {
+        damageEntity(playerId, 5)
+      } else if (areConnected(entity.standingOn, player.standingOn)) {
+        moveEntity(entityId, player.standingOn)
+      }
+    },
   },
   snake: {
     create: () => {
@@ -152,11 +165,23 @@ function moveEntity(entityId, squareId) {
   entity.standingOn = squareId
   newSquare.entities.push(entityId)
 
-  newSquare.element.append(entity.element)
+  disableInventory()
 
-  newSquare.onStepped.forEach(func => {
-    func(entityId, squareId)
-  })
+  entity.element.style.transition = 'opacity 200ms'
+  entity.element.style.opacity = 0
+  setTimeout(() => {
+    newSquare.element.append(entity.element)
+
+    setTimeout(() => {
+      entity.element.style.opacity = 1
+      
+      newSquare.onStepped.forEach(func => {
+        func(entityId, squareId)
+      })
+
+      enableInventory()
+    }, 200)
+  }, 200);
 }
 
 function removeEntity(id, fireDie = true) {
@@ -187,6 +212,7 @@ function damageEntity(id, amount = 2, fireDie = true) {
   }
 
   entity.health -= amount
+  entity.health = clamp(entity.health, 0, entity.maxHealth)
 
   const onDmged = entity_types[entity.type].onDamaged
   if (onDmged) onDmged(id, entity)
@@ -196,9 +222,19 @@ function damageEntity(id, amount = 2, fireDie = true) {
   }
 }
 
+function everyoneMoves(playerId, amount = 1) {
+  for (const id in entities) {
+    const onTurn = entity_types[entities[id].type].onTurn
+    if (!onTurn) continue
+    for (let i=1; i<=amount; i++) {
+      onTurn(id, playerId)
+    }
+  }
+}
+
 export {
   createEntity, removeEntity,
-  moveEntity, damageEntity,
+  moveEntity, damageEntity, everyoneMoves,
   entities,
   entity_types, enemies,
 }

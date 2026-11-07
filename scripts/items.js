@@ -1,23 +1,50 @@
 // Items are whats in your inventory and what you can use on squares or entities
 
-import { entities, damageEntity, moveEntity } from './entities.js'
+import { entities, damageEntity, moveEntity, everyoneMoves } from './entities.js'
 import { distanceBetweenInPixels, getId, notify } from './utils.js'
-import { areConnected, removeSquare, connectSquares, drawPaths, squares } from './squares.js'
+import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
 
 const items = {}
 
 const item_types = {
+  move: {
+    image: '/assets/images/move.png',
+    description: 'drag this onto the square you want to move to, everyone moves 2 turns',
+    usableOn: 'square',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      if (player.standingOn == element.id) { notify("You're already here"); return }
+      if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
+
+      moveEntity(playerId, element.id)
+      everyoneMoves(playerId, 2)
+    }
+  },
+  apple: {
+    image: '/assets/images/apple.png',
+    description: 'drag this onto yourself to heal for 10 health',
+    usableOn: 'player',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      if (player.health < player.maxHealth) {
+        damageEntity(playerId, -10)
+      } else {
+        notify('Already at full health')
+      }
+    }
+  },
   sword: {
     image: '/assets/images/sword.png',
-    description: 'deals 5 damage',
+    description: 'deals 5 damage, everyone moves 1 turn',
     usableOn: 'enemy',
     onUse: (element, item) => {
       const player = entities[playerId]
       const enemy = entities[element.id]
       if (player.standingOn == enemy.standingOn) {
         damageEntity(element.id, 5)
+        everyoneMoves(playerId, 1)
       } else {
         notify('Too far')
       }
@@ -37,7 +64,7 @@ const item_types = {
     usableOn: 'square',
     onUse: (element, item) => {
       const player = entities[playerId]
-      if (distanceBetweenInPixels(element, squares[player.standingOn].element) > 450) {
+      if (distanceBetweenInPixels(element, squares[player.standingOn].element) > 520) {
         notify('Too far')
         return
       }
@@ -49,19 +76,19 @@ const item_types = {
       drawPaths()
     }
   },
-  move: {
-    image: '/assets/images/move.png',
-    description: 'drag this onto the square you want to move to',
-    usableOn: 'square',
+  scissors: {
+    image: '/assets/images/scissors.png',
+    description: 'removes a path',
+    usableOn: 'connection',
     onUse: (element, item) => {
       const player = entities[playerId]
-      if (areConnected(player.standingOn, element.id)) {
-        moveEntity(playerId, element.id)
-      } else {
+      if (distanceBetweenInPixels(element, squares[player.standingOn].element) > 520) {
         notify('Too far')
+        return
       }
+      removePath(element)
     }
-  }
+  },
 }
 
 let activeZone = null;

@@ -1,7 +1,7 @@
 // squares are spaces that you can step on that contain entities
 
 import { random, getId, randomFromArray, arrayRemove } from "./utils.js"
-import { createEntity, removeEntity, enemies } from "./entities.js"
+import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
 
 const squares = {}
 
@@ -16,46 +16,53 @@ function createBlankSquare() {
   return newSquare
 }
 
+function addText(square, label, description) {
+  square.element.innerHTML += `
+  <div class="square-text">
+    <span class="label">${label}</span>
+    <span class="description">${description}</span>
+  </div>`
+}
+
+// 100 = always, 1 = 1/100
 const square_types = {
-  'text': {
-    func: (squareId, square, args) => {
-      square.element.innerHTML += `
-      <div class="square-text">
-        <span class="label">${args.label}</span>
-        <span class="description">${args.description}</span>
-      </div>`
-    },
-    onStepped: (entityId, squareId) => {
-      console.log(entityId, 'stepped on', squareId)
-    },
+  'default': {
+    chance: 100,
   },
   'spawner': {
     func: (squareId, square, args) => {
-      square.element.classList.add('spawner')
+      const div = document.createElement('div')
+      div.classList.add('spawner')
+      div.classList.add('full-square')
+      square.element.append(div)
     },
     onStepped: (_, squareId) => {
       createEntity(randomFromArray(enemies), squareId)
-    }
+    },
+    chance: 20,
   },
   'withEnemy': {
     func: (squareId, square, args) => {
       createEntity(randomFromArray(enemies), squareId)
     },
+    chance: 40,
   },
-  'withLoot': {
+  'heal': {
     func: (squareId, square, args) => {
-      createEntity(randomFromArray(enemies), squareId)
+      addText(square, 'Heal', 'Heals anyone that steps on it to full')
+      const div = document.createElement('div')
+      div.classList.add('heal')
+      div.classList.add('full-square')
+      square.element.append(div)
     },
-  },
+    onStepped: (entityId, _) => {
+      damageEntity(entityId, -100)
+    },
+    chance: 5,
+  }
 }
 
-const squares_pool = {
-  Default: { content: {}, chance: 50 },
-  Enemied: { content: { withEnemy: {} }, chance: 30 },
-  Spawner: { content: { spawner: {} }, chance: 20 },
-}
-
-function addType(squareId, type, args) {
+function addType(squareId, type) {
   const typeInfo = square_types[type]
   if (!typeInfo) {
     console.warn('Invalid square type: ' + type);
@@ -67,7 +74,7 @@ function addType(squareId, type, args) {
     console.warn('Invalid square id' + squareId)
   }
 
-  typeInfo.func && typeInfo.func(squareId, square, args)
+  typeInfo.func && typeInfo.func(squareId, square)
   typeInfo.onStepped && square.onStepped.push(typeInfo.onStepped)
 }
 
@@ -81,13 +88,12 @@ function createSquare(types = {}, row = 0) {
     row: row,
     entities: [],
     connections: [],
-    onStepped: []
+    onStepped: [],
   }
 
-  for (const type in types) {
-    const args = types[type]
-    addType(id, type, args)
-  }
+  types.forEach(type => {
+    addType(id, type)
+  })
 
   return square
 }
@@ -111,26 +117,28 @@ function removeSquare(id) {
   drawPaths()
 }
 
-function pickSquare(pool) {
-  const squares = Object.values(pool)
-  const total = squares.reduce((sum, sq) => sum + sq.chance, 0)
+function pickSquare() {
+  const picked = []
 
-  let roll = Math.random() * total
-  for (const sq of squares) {
-    roll -= sq.chance
-    if (roll < 0) return sq.content
+  for (const [name, type] of Object.entries(square_types)) {
+    if (Math.random() * 100 < type.chance) picked.push(name)
   }
+
+  return picked
 }
 
 function generateMap(rows, min = 1, max = 4) {
-  const generated = { 1: [squares_pool.Default.content] }
+  const generated = {}
+  
+  generated[1]    = [ ['default'] ]
+  generated[rows] = [ ['default'] ]
 
   for (let rowNum = 2; rowNum <= rows - 1; rowNum++) {
     const count = random(min, max)
-    generated[rowNum] = Array.from({ length: count }, () => pickSquare(squares_pool))
+    generated[rowNum] = Array.from(
+      { length: count }, () => pickSquare()
+    )
   }
-
-  generated[rows] = [squares_pool.Default.content]
 
   return generated
 }
@@ -141,7 +149,7 @@ function drawMap(map) {
   for (const rowNum in map) {
     const row = document.createElement('div')
     row.classList.add('board-row')
-    row.id = 'ROW'+rowNum
+    row.id = 'ROW' + rowNum
 
     const rowSquares = map[rowNum]
     rowSquares.forEach(types => {
@@ -165,6 +173,17 @@ function connectSquares(idA, idB) {
   a.connections.push(idB)
   b.connections.push(idA)
   return true
+}
+
+function removePath(path) {
+  const squareIds = path.id.split("SPLIT")
+  const idOne = squareIds[0]
+  const idTwo = squareIds[1]
+
+  arrayRemove(squares[idOne].connections, idTwo)
+  arrayRemove(squares[idTwo].connections, idOne)
+  
+  path.remove()
 }
 
 function generatePaths(randomness = 0.5) {
@@ -224,6 +243,8 @@ function drawPaths() {
       const x1 = a.left - boardRect.left + a.width / 2, y1 = a.bottom - boardRect.top
       const x2 = b.left - boardRect.left + b.width / 2, y2 = b.top - boardRect.top
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+      line.classList.add('connection')
+      line.id = id + 'SPLIT' + otherId
       line.setAttribute('x1', x1); line.setAttribute('y1', y1)
       line.setAttribute('x2', x2); line.setAttribute('y2', y2)
       line.setAttribute('stroke', randomColor())
@@ -262,7 +283,7 @@ function areConnected(idOne, idTwo, between = 0) {
 export {
   squares,
   generateMap, drawMap,
-  generatePaths, drawPaths,
+  generatePaths, drawPaths, removePath,
   createSquare, removeSquare, connectSquares,
   areConnected, distanceBetween,
 }
