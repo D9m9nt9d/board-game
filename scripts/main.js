@@ -1,6 +1,6 @@
 console.log('main.js loading')
 
-import { generateMap, drawMap, generatePaths, drawPaths } from './squares.js'
+import { generateMap, drawMap, generatePaths, drawPaths, squares } from './squares.js'
 import { createEntity } from './entities.js'
 import { addItem } from './items.js'
 
@@ -8,16 +8,18 @@ import { addItem } from './items.js'
 
 addItem('move')
 addItem('sword')
-addItem('sneak')
+// addItem('sneak')
 // addItem('nuke')
 // addItem('rope')
 // addItem('apple')
 // addItem('scissors')
 // addItem('amulet')
+// addItem('amulet')
+addItem('coin')
 
 // Board
 
-const map = generateMap(25)
+const map = generateMap(100)
 const firstSquareId = drawMap(map)
 
 generatePaths()

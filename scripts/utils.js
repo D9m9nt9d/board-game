@@ -27,18 +27,12 @@ function randomFromArray(arr) {
 }
 
 function notify(text) {
-  const notification = document.createElement('span')
-  notification.classList.add('notification')
-  notification.textContent = text
-  document.body.append(notification)
+  const notification = document.createElement('div');
+  notification.className = 'notification';
+  notification.textContent = text;
+  document.body.append(notification);
 
-  setTimeout(() => {
-    notification.classList.add('animate')
-  }, 10);
-
-  setTimeout(() => {
-    notification.remove()
-  }, 7000);
+  notification.addEventListener('animationend', () => notification.remove(), { once: true });
 }
 
 function distanceBetweenInPixels(el1, el2) {

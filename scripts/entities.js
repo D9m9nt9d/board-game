@@ -28,22 +28,24 @@ const entity_types = {
 
       return element
     },
-    maxHealth: 50,
+    maxHealth: 100,
     onHealthChanged: defaultOnDmged,
     onDied: (id, entity) => {
-      const itemsThatCanHelp = 0
-      for (const id in items) {
-        const item = items[id]
-        const itemInfo = item_types[item.type]
-        if (itemInfo.usableAfterDeath) {
-          itemsThatCanHelp += 1
+      setTimeout(() => {
+        let itemsThatCanHelp = 0
+        for (const id in items) {
+          const item = items[id]
+          const itemInfo = item_types[item.type]
+          if (itemInfo.usableAfterDeath) {
+            itemsThatCanHelp += 1
+          }
         }
-      }
-      if (itemsThatCanHelp > 0) {
-        notify(`You died. You have item${itemsThatCanHelp==1 ?'' :'s'} that can help you though`)
-      } else {
-        notify('You died. Refresh the page to restart')
-      }
+        if (itemsThatCanHelp > 0) {
+          notify(`You died. You have ${itemsThatCanHelp == 1 ? 'an item' : 'items'} that can help you though`)
+        } else {
+          notify('You died. Refresh the page to restart')
+        }
+      }, 500); // timeout incase he dies > picks up an item, and for the dramatic effect
     }
   },
   evilman: {
@@ -72,24 +74,7 @@ const entity_types = {
     maxHealth: 20,
     onHealthChanged: defaultOnDmged,
     onTurn: (entityId, playerId) => {
-      const entity = entities[entityId]
-      const player = entities[playerId]
-
-      if (entity.standingOn == player.standingOn) {
-        damageEntity(playerId, 5,
-          () => {
-            disableInventory()
-            entity.element.style.right = '40%'
-            return 200
-          },
-          () => {
-            entity.element.style.right = '0%'
-            setTimeout(enableInventory, 200);
-          }
-        )
-      } else if (areConnected(entity.standingOn, player.standingOn)) {
-        moveEntity(entityId, player.standingOn)
-      }
+      tryAndAttackPlayer(entityId, playerId, 5)
     },
   },
   snake: {
@@ -109,8 +94,11 @@ const entity_types = {
 
       return element
     },
-    maxHealth: 20,
+    maxHealth: 7,
     onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      tryAndAttackPlayer(entityId, playerId, 7)
+    },
   },
   goblin: {
     create: () => {
@@ -121,6 +109,7 @@ const entity_types = {
         entity 
         alive
         enemy
+        goblin
       " draggable=false></img>
       <span class="health-label"></span>
       <img src="assets/images/dagger.png" class="equipped-item" draggable=false style="opacity:1"></img>
@@ -135,8 +124,13 @@ const entity_types = {
 
       return element
     },
-    maxHealth: 20,
+    maxHealth: 15,
     onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      const entity = entities[entityId]
+      if (entity.friendly) { return }
+      tryAndAttackPlayer(entityId, playerId, 3)
+    },
   },
 }
 
@@ -146,6 +140,27 @@ function defaultOnDmged(id, entity) {
   const healthLabel = entity.element.querySelector('.health-label')
   healthLabel.style.opacity = 1
   healthLabel.textContent = `${entity.health}/${entity.maxHealth}`
+}
+
+function tryAndAttackPlayer(entityId, playerId, damage) {
+  const entity = entities[entityId]
+  const player = entities[playerId]
+
+  if (entity.standingOn == player.standingOn) {
+    damageEntity(playerId, damage,
+      () => {
+        disableInventory()
+        entity.element.style.right = '40%'
+        return 200
+      },
+      () => {
+        entity.element.style.right = '0%'
+        setTimeout(enableInventory, 200);
+      }
+    )
+  } else if (areConnected(entity.standingOn, player.standingOn)) {
+    moveEntity(entityId, player.standingOn)
+  }
 }
 
 function createEntity(type, squareId) {
@@ -224,6 +239,9 @@ function removeEntity(id, fireDie = true) {
   entity.element.isDead = true
   entity.element.remove()
 
+  const bugged = document.getElementById(id)
+  if (bugged) bugged.remove()
+
   delete entities[id]
 }
 
@@ -246,14 +264,15 @@ function setHealth(id, amount, fireDie = true) {
 
 function damageEntity(id, amount = 2,
   before = () => { return 0 },
-  after = () => { return 0 },
-  afterAfter = () => { },
+  after = () => { },
 ) {
   const entity = entities[id]
   if (!entity) {
     console.warn('Invalid entity id: ' + id)
     return
   }
+
+  entity.friendly = false
 
   const time = before()
   setTimeout(() => {

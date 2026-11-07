@@ -20,12 +20,12 @@ html {
   right: 0;
   left: 0;
   opacity: 1;
+  z-index: 50;
   pointer-events: none;
-  z-index: 500;
-  transition-duration: 7000ms;
-  transition-timing-function: linear;
+  animation: slideIn 7000ms linear;
 }
-.notification.animate {
-  opacity: 0;
-  top: 10vh;
+
+@keyframes slideIn {
+  from { opacity: 1; top: 15vh; }
+  to   { opacity: 0; top: 10vh; }
 }

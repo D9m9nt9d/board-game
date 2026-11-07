@@ -37,7 +37,6 @@ function pickItem(items) {
   }
 }
 
-
 // 100 = always, 1 = 1/100
 const square_types = {
   'default': {
@@ -68,7 +67,9 @@ const square_types = {
         'apple': 40,
         'scissors': 15,
         'rope': 15,
+        'coin': 15,
         'nuke': 2,
+        'sneak': 2,
         'amulet': 2,
       }
       const randomItem = pickItem(itemsToPickFrom)
@@ -79,14 +80,14 @@ const square_types = {
       img.id = squareId + randomItem
       img.src = itemInfo.image
       img.draggable = false
-      img.style.right = random(10,50) + '%'
-      img.style.top = random(0,50) + '%'
+      img.style.right = random(10, 50) + '%'
+      img.style.top = random(0, 50) + '%'
 
       square.element.append(img)
       square.loot = randomItem
     },
     onStepped: (entityId, squareId) => {
-      if (entityId!=playerId) {return}
+      if (entityId != playerId) { return }
       const loot = squares[squareId].loot
       if (loot) {
         delete squares[squareId].loot
@@ -178,9 +179,9 @@ function pickSquare() {
 
 function generateMap(rows, min = 1, max = 4) {
   const generated = {}
-  
-  generated[1]    = [ ['default'] ]
-  generated[rows] = [ ['default'] ]
+
+  generated[1] = [['default']]
+  generated[rows] = [['default']]
 
   for (let rowNum = 2; rowNum <= rows - 1; rowNum++) {
     const count = random(min, max)
@@ -210,6 +211,11 @@ function drawMap(map) {
     board.append(row)
   }
 
+  window.scroll({
+    behavior: 'smooth',
+    top: 0,
+  })
+
   return firstSquareId
 }
 
@@ -231,7 +237,7 @@ function removePath(path) {
 
   arrayRemove(squares[idOne].connections, idTwo)
   arrayRemove(squares[idTwo].connections, idOne)
-  
+
   path.remove()
 }
 

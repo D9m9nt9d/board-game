@@ -101,7 +101,7 @@
   width: 60px;
 }
 .entity-slot, .entity-slot-small {
-  z-index: 5;
+  z-index: 6;
   transition: opacity 200ms, left 200ms, right 200ms;
 }
 .entity {

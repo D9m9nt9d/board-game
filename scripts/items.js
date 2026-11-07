@@ -2,7 +2,7 @@
 
 import { entities, damageEntity, moveEntity, everyoneMoves, createEntity } from './entities.js'
 import { distanceBetweenInPixels, getId, notify } from './utils.js'
-import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath } from './squares.js'
+import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
 
@@ -127,6 +127,23 @@ const item_types = {
       return true
     },
     uses: 3,
+  },
+  coin: {
+    image: '/assets/images/coin.png',
+    description: "use this to befriend a goblin (it won't attack you)",
+    usableOn: 'goblin',
+    onUse: (element, item) => {
+      const entity = entities[element.id]
+      const player = entities[playerId]
+      if ( !(player.standingOn==entity.standingOn) && !areConnected(player.standingOn, entity.standingOn)) {
+        notify('Too far')
+        return
+      }
+      entity.element.style.zIndex = 5
+      entity.friendly = true
+      return true
+    },
+    uses: 1,
   },
   amulet: {
     image: '/assets/images/inuit-amulet.png',
