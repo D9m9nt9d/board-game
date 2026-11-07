@@ -1,6 +1,6 @@
 // Items are whats in your inventory and what you can use on squares or entities
 
-import { entities, damageEntity, moveEntity, everyoneMoves } from './entities.js'
+import { entities, damageEntity, moveEntity, everyoneMoves, createEntity } from './entities.js'
 import { distanceBetweenInPixels, getId, notify } from './utils.js'
 import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath } from './squares.js'
 
@@ -11,7 +11,7 @@ const items = {}
 const item_types = {
   move: {
     image: '/assets/images/move.png',
-    description: 'drag this onto the square you want to move to, everyone moves 2 turns',
+    description: 'drag this onto the square you want to move to',
     usableOn: 'square',
     onUse: (element, item) => {
       const player = entities[playerId]
@@ -19,21 +19,8 @@ const item_types = {
       if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
 
       moveEntity(playerId, element.id)
-      everyoneMoves(playerId, 2)
-    }
-  },
-  apple: {
-    image: '/assets/images/apple.png',
-    description: 'drag this onto yourself to heal for 10 health',
-    usableOn: 'player',
-    onUse: (element, item) => {
-      const player = entities[playerId]
-      if (player.health < player.maxHealth) {
-        damageEntity(playerId, -10)
-      } else {
-        notify('Already at full health')
-      }
-    }
+    },
+    otherMoves: 2,
   },
   sword: {
     image: '/assets/images/sword.png',
@@ -44,11 +31,25 @@ const item_types = {
       const enemy = entities[element.id]
       if (player.standingOn == enemy.standingOn) {
         damageEntity(element.id, 5)
-        everyoneMoves(playerId, 1)
       } else {
         notify('Too far')
       }
-    }
+    },
+    otherMoves: 1,
+  },
+  apple: {
+    image: '/assets/images/apple.png',
+    description: 'drag this onto yourself to heal for 20 health',
+    usableOn: 'player',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      if (player.health < player.maxHealth) {
+        damageEntity(playerId, -20)
+      } else {
+        notify('Already at full health')
+      }
+    },
+    uses: 1,
   },
   nuke: {
     image: '/assets/images/nuke.png',
@@ -56,11 +57,12 @@ const item_types = {
     usableOn: 'square',
     onUse: (element, item) => {
       removeSquare(element.id)
-    }
+    },
+    uses: 1,
   },
   rope: {
     image: '/assets/images/vibrant-rope.png',
-    description: 'connect a space with the space your currently standing on',
+    description: 'connect a space with the space your standing on',
     usableOn: 'square',
     onUse: (element, item) => {
       const player = entities[playerId]
@@ -72,9 +74,11 @@ const item_types = {
         notify('Already connected')
         return
       }
+
       connectSquares(element.id, player.standingOn)
       drawPaths()
-    }
+    },
+    uses: 2,
   },
   scissors: {
     image: '/assets/images/scissors.png',
@@ -87,7 +91,26 @@ const item_types = {
         return
       }
       removePath(element)
-    }
+    },
+    uses: 3,
+  },
+  amulet: {
+    image: '/assets/images/inuit-amulet.png',
+    description: 'respawn from the dead',
+    usableOn: 'square',
+    onUse: (element, item) => {
+      if (entities[playerId]) {
+        notify('You are not dead')
+        return
+      }
+      if (squares[element.id].row > 5) {
+        notify('Can only be used on top squares (from row 1 to 5)')
+        return
+      }
+
+      changePlayerId(createEntity('player', element.id))
+    },
+    uses: 1,
   },
 }
 
@@ -107,6 +130,14 @@ function setActive(zone) {
   activeZone = zone;
 }
 
+function formatUses(uses) {
+  if (!uses) {
+    return ''
+  } else {
+    return ` (${uses} use${uses == 1 ? '' : 's'})`
+  }
+}
+
 const inventoryDiv = document.getElementById('inventory')
 
 function addItem(name) {
@@ -116,7 +147,8 @@ function addItem(name) {
   itemSlot.classList.add('item-slot')
   itemSlot.innerHTML = `
     <img draggable=false class="item" src="${itemInfo.image}"></img>
-    <span class="item-desc">${itemInfo.description}</span>
+    <span class="item-desc">${itemInfo.description}${formatUses(itemInfo.uses)}</span>
+    <span class="moves-amount">${itemInfo.otherMoves || ''}</span>
   `
   inventoryDiv.append(itemSlot)
 
@@ -127,6 +159,7 @@ function addItem(name) {
 
   items[id] = {
     type: name,
+    uses: itemInfo.uses,
     itemSlot: itemSlot,
     dragRef: hcgDraggable(item, {
       revert: true,
@@ -147,6 +180,17 @@ function addItem(name) {
         if (e.moved && zone) {
           console.log(`${item.id} was used on ${zone.id}`)
           itemInfo.onUse(zone, item)
+          if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
+          if (itemInfo.uses) {
+            const actualItem = items[id]
+            const uses = actualItem.uses - 1
+            if (uses > 0) {
+              actualItem.uses = uses
+              actualItem.itemSlot.querySelector('.item-desc').textContent = itemInfo.description+formatUses(uses)
+            } else {
+              removeItem(item.id)
+            }
+          }
         }
       }
     })

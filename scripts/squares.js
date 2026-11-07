@@ -2,6 +2,7 @@
 
 import { random, getId, randomFromArray, arrayRemove } from "./utils.js"
 import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
+import { playerId } from "./main.js"
 
 const squares = {}
 
@@ -36,7 +37,8 @@ const square_types = {
       div.classList.add('full-square')
       square.element.append(div)
     },
-    onStepped: (_, squareId) => {
+    onStepped: (entityId, squareId) => {
+      if (entityId != playerId) { return }
       createEntity(randomFromArray(enemies), squareId)
     },
     chance: 20,

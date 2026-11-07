@@ -204,12 +204,14 @@ function removeEntity(id, fireDie = true) {
   delete entities[id]
 }
 
-function damageEntity(id, amount = 2, fireDie = true) {
+function damageEntity(id, amount = 2, fireDie = true, before, after) {
   const entity = entities[id]
   if (!entity) {
     console.warn('Invalid entity id: ' + id)
     return
   }
+
+  if (before) before()
 
   entity.health -= amount
   entity.health = clamp(entity.health, 0, entity.maxHealth)
@@ -220,6 +222,8 @@ function damageEntity(id, amount = 2, fireDie = true) {
   if (entity.health <= 0) {
     removeEntity(id, fireDie)
   }
+
+  if (after) after()
 }
 
 function everyoneMoves(playerId, amount = 1) {

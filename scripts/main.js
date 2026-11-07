@@ -12,6 +12,7 @@ addItem('nuke')
 addItem('rope')
 addItem('apple')
 addItem('scissors')
+addItem('amulet')
 
 // Board
 
