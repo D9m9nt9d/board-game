@@ -63,6 +63,8 @@ const entity_types = {
       const entity = entities[entityId]
       const player = entities[playerId]
 
+      if (!player) {return}
+
       if (entity.standingOn == player.standingOn) {
         damageEntity(playerId, 5)
       } else if (areConnected(entity.standingOn, player.standingOn)) {
@@ -170,6 +172,7 @@ function moveEntity(entityId, squareId) {
   entity.element.style.transition = 'opacity 200ms'
   entity.element.style.opacity = 0
   setTimeout(() => {
+    if (entity.element.isDead) { return }
     newSquare.element.append(entity.element)
 
     setTimeout(() => {
@@ -199,6 +202,7 @@ function removeEntity(id, fireDie = true) {
   const standingOn = squares[entity.standingOn]
   arrayRemove(standingOn.entities, id)
 
+  entity.element.isDead = true
   entity.element.remove()
 
   delete entities[id]

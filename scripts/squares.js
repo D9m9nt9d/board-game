@@ -3,6 +3,7 @@
 import { random, getId, randomFromArray, arrayRemove } from "./utils.js"
 import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
 import { playerId } from "./main.js"
+import { addItem, item_types } from "./items.js"
 
 const squares = {}
 
@@ -24,6 +25,18 @@ function addText(square, label, description) {
     <span class="description">${description}</span>
   </div>`
 }
+
+function pickItem(items) {
+  const entries = Object.entries(items)
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0)
+
+  let roll = Math.random() * total
+  for (const [name, weight] of entries) {
+    roll -= weight
+    if (roll < 0) return name
+  }
+}
+
 
 // 100 = always, 1 = 1/100
 const square_types = {
@@ -48,6 +61,40 @@ const square_types = {
       createEntity(randomFromArray(enemies), squareId)
     },
     chance: 40,
+  },
+  'withItem': {
+    func: (squareId, square, args) => {
+      const itemsToPickFrom = {
+        'apple': 40,
+        'scissors': 15,
+        'rope': 15,
+        'nuke': 2,
+        'amulet': 2,
+      }
+      const randomItem = pickItem(itemsToPickFrom)
+      const itemInfo = item_types[randomItem]
+
+      const img = document.createElement('img')
+      img.classList.add('item-small')
+      img.id = squareId + randomItem
+      img.src = itemInfo.image
+      img.draggable = false
+      img.style.right = random(10,50) + '%'
+      img.style.top = random(0,50) + '%'
+
+      square.element.append(img)
+      square.loot = randomItem
+    },
+    onStepped: (entityId, squareId) => {
+      if (entityId!=playerId) {return}
+      const loot = squares[squareId].loot
+      if (loot) {
+        delete squares[squareId].loot
+        addItem(loot)
+        document.getElementById(squareId + loot).remove()
+      }
+    },
+    chance: 10,
   },
   'heal': {
     func: (squareId, square, args) => {

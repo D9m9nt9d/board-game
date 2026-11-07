@@ -19,8 +19,23 @@ const item_types = {
       if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
 
       moveEntity(playerId, element.id)
+      return true
     },
     otherMoves: 2,
+  },
+  sneak: {
+    image: '/assets/images/sneak.png',
+    description: 'sneak past enemies',
+    usableOn: 'square',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      if (player.standingOn == element.id) { notify("You're already here"); return }
+      if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
+
+      moveEntity(playerId, element.id)
+      return true
+    },
+    uses: 1,
   },
   sword: {
     image: '/assets/images/sword.png',
@@ -29,11 +44,13 @@ const item_types = {
     onUse: (element, item) => {
       const player = entities[playerId]
       const enemy = entities[element.id]
-      if (player.standingOn == enemy.standingOn) {
-        damageEntity(element.id, 5)
-      } else {
+      if (player.standingOn != enemy.standingOn) {
         notify('Too far')
+        return
       }
+
+      damageEntity(element.id, 5)
+      return true
     },
     otherMoves: 1,
   },
@@ -43,11 +60,13 @@ const item_types = {
     usableOn: 'player',
     onUse: (element, item) => {
       const player = entities[playerId]
-      if (player.health < player.maxHealth) {
-        damageEntity(playerId, -20)
-      } else {
+      if (player.health >= player.maxHealth) {
         notify('Already at full health')
+        return
       }
+
+      damageEntity(playerId, -20)
+      return true
     },
     uses: 1,
   },
@@ -57,6 +76,7 @@ const item_types = {
     usableOn: 'square',
     onUse: (element, item) => {
       removeSquare(element.id)
+      return true
     },
     uses: 1,
   },
@@ -77,6 +97,7 @@ const item_types = {
 
       connectSquares(element.id, player.standingOn)
       drawPaths()
+      return true
     },
     uses: 2,
   },
@@ -90,7 +111,9 @@ const item_types = {
         notify('Too far')
         return
       }
+
       removePath(element)
+      return true
     },
     uses: 3,
   },
@@ -109,6 +132,7 @@ const item_types = {
       }
 
       changePlayerId(createEntity('player', element.id))
+      return true
     },
     uses: 1,
   },
@@ -157,6 +181,31 @@ function addItem(name) {
   const item = itemSlot.querySelector('img')
   item.id = id
 
+  function itemUsed(zone) {
+    console.log(`${item.id} was used on ${zone.id}`)
+
+    if (!itemInfo.usableAfterDeath && !entities[playerId]) {
+      notify("You can't use this when you are dead")
+      return
+    }
+
+    const succesfullyUsed = itemInfo.onUse(zone, item)
+    if (!succesfullyUsed) { return }
+
+    if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
+
+    if (itemInfo.uses) {
+      const actualItem = items[id]
+      const uses = actualItem.uses - 1
+      if (uses > 0) {
+        actualItem.uses = uses
+        actualItem.itemSlot.querySelector('.item-desc').textContent = itemInfo.description + formatUses(uses)
+      } else {
+        removeItem(item.id)
+      }
+    }
+  }
+
   items[id] = {
     type: name,
     uses: itemInfo.uses,
@@ -177,21 +226,7 @@ function addItem(name) {
         const zone = zoneAt(e);
         setActive(null); // clear outline
 
-        if (e.moved && zone) {
-          console.log(`${item.id} was used on ${zone.id}`)
-          itemInfo.onUse(zone, item)
-          if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
-          if (itemInfo.uses) {
-            const actualItem = items[id]
-            const uses = actualItem.uses - 1
-            if (uses > 0) {
-              actualItem.uses = uses
-              actualItem.itemSlot.querySelector('.item-desc').textContent = itemInfo.description+formatUses(uses)
-            } else {
-              removeItem(item.id)
-            }
-          }
-        }
+        if (e.moved && zone) itemUsed(zone)
       }
     })
   }

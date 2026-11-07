@@ -6,13 +6,14 @@ import { addItem } from './items.js'
 
 // Items
 
-addItem('sword')
 addItem('move')
-addItem('nuke')
-addItem('rope')
-addItem('apple')
-addItem('scissors')
-addItem('amulet')
+addItem('sword')
+addItem('sneak')
+// addItem('nuke')
+// addItem('rope')
+// addItem('apple')
+// addItem('scissors')
+// addItem('amulet')
 
 // Board
 
