@@ -49,8 +49,19 @@ const item_types = {
         return
       }
 
-      damageEntity(element.id, 5)
-      return true
+      damageEntity(element.id, 5,
+        () => {
+          disableInventory()
+          player.element.style.left = '40%'
+          return 200
+        },
+        () => {
+          player.element.style.left = '0%'
+          setTimeout(enableInventory, 200);
+        }
+      )
+
+      return 400
     },
     otherMoves: 1,
   },
@@ -135,6 +146,7 @@ const item_types = {
       return true
     },
     uses: 1,
+    usableAfterDeath: true,
   },
 }
 
@@ -189,11 +201,17 @@ function addItem(name) {
       return
     }
 
-    const succesfullyUsed = itemInfo.onUse(zone, item)
-    if (!succesfullyUsed) { return }
+    const successOrTime = itemInfo.onUse(zone, item)
+    if (!successOrTime) { return }
 
-    if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
-
+    if (typeof successOrTime == 'number') {
+      setTimeout(() => {
+        if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
+      }, successOrTime);
+    } else {
+      if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
+    }
+    
     if (itemInfo.uses) {
       const actualItem = items[id]
       const uses = actualItem.uses - 1

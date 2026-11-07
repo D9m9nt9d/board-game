@@ -15,24 +15,6 @@
   z-index: 10;
 }
 
-/* #stats {
-  background-color: transparent;
-
-  margin-top: 9vh;
-  margin-bottom: 2vh;
-  height: auto;
-  width: 180px;
-  padding: 0 10px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-row {
-  display: flex;
-} */
-
 #inventory-label {
   margin-top: 15vh;
   margin-bottom: 1vh;

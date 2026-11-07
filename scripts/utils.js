@@ -34,7 +34,7 @@ function notify(text) {
 
   setTimeout(() => {
     notification.classList.add('animate')
-  }, 1);
+  }, 10);
 
   setTimeout(() => {
     notification.remove()

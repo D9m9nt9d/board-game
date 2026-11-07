@@ -1,8 +1,8 @@
 // entities are anything that is on the square
 
-import { random, getId, arrayRemove, clamp } from "./utils.js"
+import { random, getId, arrayRemove, clamp, notify } from "./utils.js"
 import { squares, areConnected } from "./squares.js"
-import { disableInventory, enableInventory } from "./items.js"
+import { disableInventory, enableInventory, item_types, items } from "./items.js"
 
 const entities = {}
 
@@ -28,10 +28,22 @@ const entity_types = {
 
       return element
     },
-    maxHealth: 100,
-    onDamaged: defaultOnDmged,
+    maxHealth: 50,
+    onHealthChanged: defaultOnDmged,
     onDied: (id, entity) => {
-      console.log(id + ' died')
+      const itemsThatCanHelp = 0
+      for (const id in items) {
+        const item = items[id]
+        const itemInfo = item_types[item.type]
+        if (itemInfo.usableAfterDeath) {
+          itemsThatCanHelp += 1
+        }
+      }
+      if (itemsThatCanHelp > 0) {
+        notify(`You died. You have item${itemsThatCanHelp==1 ?'' :'s'} that can help you though`)
+      } else {
+        notify('You died. Refresh the page to restart')
+      }
     }
   },
   evilman: {
@@ -58,15 +70,23 @@ const entity_types = {
       return element
     },
     maxHealth: 20,
-    onDamaged: defaultOnDmged,
+    onHealthChanged: defaultOnDmged,
     onTurn: (entityId, playerId) => {
       const entity = entities[entityId]
       const player = entities[playerId]
 
-      if (!player) {return}
-
       if (entity.standingOn == player.standingOn) {
-        damageEntity(playerId, 5)
+        damageEntity(playerId, 5,
+          () => {
+            disableInventory()
+            entity.element.style.right = '40%'
+            return 200
+          },
+          () => {
+            entity.element.style.right = '0%'
+            setTimeout(enableInventory, 200);
+          }
+        )
       } else if (areConnected(entity.standingOn, player.standingOn)) {
         moveEntity(entityId, player.standingOn)
       }
@@ -90,7 +110,7 @@ const entity_types = {
       return element
     },
     maxHealth: 20,
-    onDamaged: defaultOnDmged,
+    onHealthChanged: defaultOnDmged,
   },
   goblin: {
     create: () => {
@@ -116,7 +136,7 @@ const entity_types = {
       return element
     },
     maxHealth: 20,
-    onDamaged: defaultOnDmged,
+    onHealthChanged: defaultOnDmged,
   },
 }
 
@@ -169,7 +189,6 @@ function moveEntity(entityId, squareId) {
 
   disableInventory()
 
-  entity.element.style.transition = 'opacity 200ms'
   entity.element.style.opacity = 0
   setTimeout(() => {
     if (entity.element.isDead) { return }
@@ -177,7 +196,7 @@ function moveEntity(entityId, squareId) {
 
     setTimeout(() => {
       entity.element.style.opacity = 1
-      
+
       newSquare.onStepped.forEach(func => {
         func(entityId, squareId)
       })
@@ -208,33 +227,46 @@ function removeEntity(id, fireDie = true) {
   delete entities[id]
 }
 
-function damageEntity(id, amount = 2, fireDie = true, before, after) {
+function setHealth(id, amount, fireDie = true) {
   const entity = entities[id]
   if (!entity) {
     console.warn('Invalid entity id: ' + id)
     return
   }
 
-  if (before) before()
+  entity.health = clamp(amount, 0, entity.maxHealth)
 
-  entity.health -= amount
-  entity.health = clamp(entity.health, 0, entity.maxHealth)
-
-  const onDmged = entity_types[entity.type].onDamaged
-  if (onDmged) onDmged(id, entity)
+  const onHpChanged = entity_types[entity.type].onHealthChanged
+  if (onHpChanged) onHpChanged(id, entity)
 
   if (entity.health <= 0) {
     removeEntity(id, fireDie)
   }
+}
 
-  if (after) after()
+function damageEntity(id, amount = 2,
+  before = () => { return 0 },
+  after = () => { return 0 },
+  afterAfter = () => { },
+) {
+  const entity = entities[id]
+  if (!entity) {
+    console.warn('Invalid entity id: ' + id)
+    return
+  }
+
+  const time = before()
+  setTimeout(() => {
+    setHealth(id, entity.health - amount, true)
+    after()
+  }, time);
 }
 
 function everyoneMoves(playerId, amount = 1) {
   for (const id in entities) {
     const onTurn = entity_types[entities[id].type].onTurn
     if (!onTurn) continue
-    for (let i=1; i<=amount; i++) {
+    for (let i = 1; i <= amount; i++) {
       onTurn(id, playerId)
     }
   }
