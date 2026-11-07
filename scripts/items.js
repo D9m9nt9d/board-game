@@ -135,7 +135,7 @@ const item_types = {
     onUse: (element, item) => {
       const entity = entities[element.id]
       const player = entities[playerId]
-      if ( !(player.standingOn==entity.standingOn) && !areConnected(player.standingOn, entity.standingOn)) {
+      if (!(player.standingOn == entity.standingOn) && !areConnected(player.standingOn, entity.standingOn)) {
         notify('Too far')
         return
       }
@@ -228,7 +228,7 @@ function addItem(name) {
     } else {
       if (itemInfo.otherMoves) everyoneMoves(playerId, itemInfo.otherMoves)
     }
-    
+
     if (itemInfo.uses) {
       const actualItem = items[id]
       const uses = actualItem.uses - 1
@@ -276,6 +276,20 @@ function removeItem(id) {
   delete items[id]
 }
 
+function reconcileItems() {
+  const itemsAlreadyHas = new Set()
+
+  for (const id in items) {
+    itemsAlreadyHas.add(items[id].type)
+  }
+
+  for (const itemName in item_types) {
+    if (!itemsAlreadyHas.has(itemName)) {
+      addItem(itemName)
+    }
+  }
+}
+
 function disableInventory() {
   for (const id in items) {
     items[id].dragRef.disable().reset()
@@ -290,6 +304,6 @@ function enableInventory() {
 
 export {
   item_types, items,
-  addItem, removeItem,
+  addItem, removeItem, reconcileItems,
   disableInventory, enableInventory
 }

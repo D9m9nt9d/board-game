@@ -29,8 +29,9 @@
 
 .full-square {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100%;
   height: 100%;
   border-radius: 14px;
@@ -47,6 +48,25 @@
   z-index: 2;
   background: rgba(255, 1, 1, 0.5);
 }
+.win {
+  padding: 5px;
+  border: 5px solid transparent;
+  border-radius: 3px;
+  background: 
+    linear-gradient(28deg, #c7b235, #f2f3a5) padding-box,
+    linear-gradient(28deg, #b19f30, #eced9d) border-box;
+}
+.win-text {
+  font-family: "Redaction 50", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: x-large;
+  color: #a5873a;
+}
+.win-text .description {
+  opacity: 1
+}
+
 .item-small {
   position: absolute;
   z-index: 5;
@@ -164,4 +184,10 @@
   height:100%;
   z-index:0;
   stroke-linecap:round;
+}
+
+.win-outline {
+  outline: 5px outset transparent;
+  border-radius: 0;
+  outline-offset: 12px;
 }

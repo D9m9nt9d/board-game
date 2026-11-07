@@ -1,9 +1,9 @@
 // squares are spaces that you can step on that contain entities
 
-import { random, getId, randomFromArray, arrayRemove } from "./utils.js"
+import { random, getId, randomFromArray, arrayRemove, notify } from "./utils.js"
 import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
 import { playerId } from "./main.js"
-import { addItem, item_types } from "./items.js"
+import { addItem, item_types, items, reconcileItems, removeItem } from "./items.js"
 
 const squares = {}
 
@@ -43,7 +43,7 @@ const square_types = {
     chance: 100,
   },
   'spawner': {
-    func: (squareId, square, args) => {
+    func: (squareId, square) => {
       const div = document.createElement('div')
       div.classList.add('spawner')
       div.classList.add('full-square')
@@ -56,13 +56,13 @@ const square_types = {
     chance: 20,
   },
   'withEnemy': {
-    func: (squareId, square, args) => {
+    func: (squareId, square) => {
       createEntity(randomFromArray(enemies), squareId)
     },
     chance: 40,
   },
   'withItem': {
-    func: (squareId, square, args) => {
+    func: (squareId, square) => {
       const itemsToPickFrom = {
         'apple': 40,
         'scissors': 15,
@@ -98,7 +98,7 @@ const square_types = {
     chance: 10,
   },
   'heal': {
-    func: (squareId, square, args) => {
+    func: (squareId, square) => {
       addText(square, 'Heal', 'Heals anyone that steps on it to full')
       const div = document.createElement('div')
       div.classList.add('heal')
@@ -112,7 +112,7 @@ const square_types = {
     chance: 5,
   },
   'dmg': {
-    func: (squareId, square, args) => {
+    func: (squareId, square) => {
       addText(square, 'Bad square', "Randomly damages anyone that steps on this square")
       const div = document.createElement('div')
       div.classList.add('dmg')
@@ -120,10 +120,39 @@ const square_types = {
       square.element.append(div)
     },
     onStepped: (entityId, _) => {
-      damageEntity(entityId, random(5,25))
+      damageEntity(entityId, random(5, 25))
     },
     chance: 3,
   },
+  'win': {
+    func: (squareId, square) => {
+      addText(square, 'Win', 'GG!')
+      square.element.classList.add('win-outline')
+      square.element.querySelector('.square-text').classList.add('win-text')
+      const div = document.createElement('div')
+      div.classList.add('win')
+      div.classList.add('full-square')
+      square.element.append(div)
+    },
+    onStepped: (entityId, _) => {
+      if (entityId != playerId) { return }
+      
+      notify('Congratulations on making it to the bottom! As a reward take all these items!')
+      damageEntity(entityId, -100)
+      reconcileItems()
+
+      setTimeout(() => {
+        notify('Just kidding, as a reward you get the joy of being able to complete the game again.')
+        setTimeout(() => {
+          for (const id in items) removeItem(id)
+          removeEntity(entityId)
+          addItem('move')
+          addItem('sword')
+        }, 2500);
+      }, 10000);
+    },
+    chance: 0,
+  }
 }
 
 function addType(squareId, type) {
@@ -195,7 +224,7 @@ function generateMap(rows, min = 1, max = 4) {
   const generated = {}
 
   generated[1] = [['default']]
-  generated[rows] = [['default']]
+  generated[rows] = [['win']]
 
   for (let rowNum = 2; rowNum <= rows - 1; rowNum++) {
     const count = random(min, max)
