@@ -6,7 +6,7 @@ function random(min, max) {
 
 function clamp(num, min, max) {
   return Math.min(Math.max(num, min), max)
-} 
+}
 
 let id = 0
 function getId() {
@@ -45,7 +45,14 @@ function distanceBetweenInPixels(el1, el2) {
   return Math.hypot(dx, dy)
 }
 
+function playSound(name, variations, volume = 1) {
+  var audio = new Audio(`assets/sounds/${name}${variations?random(1, variations):''}.mp3`);
+  audio.volume = volume
+  audio.play();
+}
+
 export {
   random, clamp, arrayRemove, randomFromArray,
-  getId, notify, distanceBetweenInPixels
+  getId, notify, distanceBetweenInPixels,
+  playSound,
 }

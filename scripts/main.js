@@ -29,7 +29,7 @@ export {playerId, changePlayerId}
 
 // Board
 
-const map = generateMap(100)
+const map = generateMap(80)
 const firstSquareId = drawMap(map)
 
 generatePaths()

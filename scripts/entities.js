@@ -1,6 +1,6 @@
 // entities are anything that is on the square
 
-import { random, getId, arrayRemove, clamp, notify } from "./utils.js"
+import { random, getId, arrayRemove, clamp, notify, playSound } from "./utils.js"
 import { squares, areConnected } from "./squares.js"
 import { disableInventory, enableInventory, item_types, items } from "./items.js"
 
@@ -150,6 +150,7 @@ function tryAndAttackPlayer(entityId, playerId, damage) {
     damageEntity(playerId, damage,
       () => {
         disableInventory()
+        playSound('swing-', 2)
         entity.element.style.right = '40%'
         return 200
       },

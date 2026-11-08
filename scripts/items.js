@@ -1,12 +1,14 @@
 // Items are whats in your inventory and what you can use on squares or entities
 
 import { entities, damageEntity, moveEntity, everyoneMoves, createEntity } from './entities.js'
-import { distanceBetweenInPixels, getId, notify } from './utils.js'
+import { distanceBetweenInPixels, getId, notify, playSound } from './utils.js'
 import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
 
 const items = {}
+
+let maxRow = 5
 
 const item_types = {
   move: {
@@ -17,6 +19,9 @@ const item_types = {
       const player = entities[playerId]
       if (player.standingOn == element.id) { notify("You're already here"); return }
       if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
+      
+      const squareRow = squares[element.id].row
+      if (squareRow > maxRow) { maxRow = squareRow }
 
       moveEntity(playerId, element.id)
       return true
@@ -52,6 +57,7 @@ const item_types = {
       damageEntity(element.id, 5,
         () => {
           disableInventory()
+          playSound('swing-',2)
           player.element.style.left = '40%'
           return 200
         },
@@ -76,6 +82,7 @@ const item_types = {
         return
       }
 
+      playSound('apple-',3)
       damageEntity(playerId, -20)
       return true
     },
@@ -86,6 +93,7 @@ const item_types = {
     description: 'removes a space',
     usableOn: 'square',
     onUse: (element, item) => {
+      playSound('loud-explosion-', 2, 0.7)
       removeSquare(element.id)
       return true
     },
@@ -106,6 +114,7 @@ const item_types = {
         return
       }
 
+      playSound('rope')
       connectSquares(element.id, player.standingOn)
       drawPaths()
       return true
@@ -123,6 +132,7 @@ const item_types = {
         return
       }
 
+      playSound('scissors')
       removePath(element)
       return true
     },
@@ -139,6 +149,8 @@ const item_types = {
         notify('Too far')
         return
       }
+
+      playSound('coin')
       entity.element.style.zIndex = 5
       entity.friendly = true
       return true
@@ -150,16 +162,20 @@ const item_types = {
     description: 'respawn from the dead',
     usableOn: 'square',
     onUse: (element, item) => {
-      if (entities[playerId]) {
+      const player = entities[playerId]
+      if (player) {
         notify('You are not dead')
         return
       }
-      if (squares[element.id].row > 5) {
-        notify('Can only be used on top squares (from row 1 to 5)')
+      if (squares[element.id].row > maxRow) {
+        notify(`Can only be used on rows you've already been to (from row 1 to ${maxRow})`)
         return
       }
 
-      changePlayerId(createEntity('player', element.id))
+      playSound('amulet')
+      setTimeout(() => {
+        changePlayerId(createEntity('player', element.id))
+      }, 700);
       return true
     },
     uses: 1,

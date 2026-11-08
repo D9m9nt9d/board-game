@@ -1,6 +1,6 @@
 // squares are spaces that you can step on that contain entities
 
-import { random, getId, randomFromArray, arrayRemove, notify } from "./utils.js"
+import { random, getId, randomFromArray, arrayRemove, notify, playSound } from "./utils.js"
 import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
 import { playerId } from "./main.js"
 import { addItem, item_types, items, reconcileItems, removeItem } from "./items.js"
@@ -36,6 +36,8 @@ function pickItem(items) {
   }
 }
 
+let wonCD = false
+
 // 100 = always, 1 = 1/100
 // onStepped will also run in this order unless addType was called later on
 const square_types = {
@@ -59,7 +61,7 @@ const square_types = {
     func: (squareId, square) => {
       createEntity(randomFromArray(enemies), squareId)
     },
-    chance: 40,
+    chance: 36,
   },
   'withItem': {
     func: (squareId, square) => {
@@ -95,7 +97,7 @@ const square_types = {
         document.getElementById(squareId + loot).remove()
       }
     },
-    chance: 10,
+    chance: 14,
   },
   'heal': {
     func: (squareId, square) => {
@@ -106,7 +108,6 @@ const square_types = {
       square.element.append(div)
     },
     onStepped: (entityId, _) => {
-      console.log(entityId)
       damageEntity(entityId, -100)
     },
     chance: 5,
@@ -135,8 +136,12 @@ const square_types = {
       square.element.append(div)
     },
     onStepped: (entityId, _) => {
-      if (entityId != playerId) { return }
-      
+      if (wonCD) { return }
+      if (entityId != playerId) { return } 
+
+      wonCD = true
+      playSound('wind-chimes-bells')
+
       notify('Congratulations on making it to the bottom! As a reward take all these items!')
       damageEntity(entityId, -100)
       reconcileItems()
@@ -148,6 +153,7 @@ const square_types = {
           removeEntity(entityId)
           addItem('move')
           addItem('sword')
+          wonCD = false
         }, 2500);
       }, 10000);
     },
