@@ -61,7 +61,7 @@ const square_types = {
     func: (squareId, square) => {
       createEntity(randomFromArray(enemies), squareId)
     },
-    chance: 36,
+    chance: 32,
   },
   'withItem': {
     func: (squareId, square) => {
@@ -137,7 +137,7 @@ const square_types = {
     },
     onStepped: (entityId, _) => {
       if (wonCD) { return }
-      if (entityId != playerId) { return } 
+      if (entityId != playerId) { return }
 
       wonCD = true
       playSound('wind-chimes-bells')
