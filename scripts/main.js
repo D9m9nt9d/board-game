@@ -16,6 +16,7 @@ addItem('sword')
 // addItem('amulet')
 // addItem('amulet')
 // addItem('coin')
+addItem('dagger')
 
 // Entities
 

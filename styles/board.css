@@ -136,6 +136,7 @@
   position: absolute;
   height: 45px;
   width: 45px;
+  transition: opacity 100ms, transform 400ms, right 400ms;
 }
 
 .health-label {

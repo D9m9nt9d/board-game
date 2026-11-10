@@ -2,7 +2,8 @@
 
 import { random, getId, arrayRemove, clamp, notify, playSound } from "./utils.js"
 import { squares, areConnected } from "./squares.js"
-import { disableInventory, enableInventory, item_types, items } from "./items.js"
+import { addItem, disableInventory, enableInventory, item_types, items } from "./items.js"
+import { playerId } from "./main.js"
 
 const entities = {}
 
@@ -131,6 +132,11 @@ const entity_types = {
       if (entity.friendly) { return }
       tryAndAttackPlayer(entityId, playerId, 3)
     },
+    onDied: (id, entity) => {
+      if (entity.standingOn != entities[playerId].standingOn) { return }
+      if (random(1, 2) != 1) { return }
+      addItem('dagger')
+    }
   },
 }
 

@@ -54,14 +54,19 @@ const item_types = {
         return
       }
 
+      const equippedItem = player.element.querySelector('.equipped-item')
+
       damageEntity(element.id, 5,
         () => {
           disableInventory()
           playSound('swing-',2)
+          equippedItem.src = 'assets/images/sword.png'
+          equippedItem.style.opacity = 1
           player.element.style.left = '40%'
           return 200
         },
         () => {
+          equippedItem.style.opacity = 0
           player.element.style.left = '0%'
           setTimeout(enableInventory, 200);
         }
@@ -70,6 +75,40 @@ const item_types = {
       return 400
     },
     otherMoves: 1,
+  },
+  dagger: {
+    image: 'assets/images/dagger.png',
+    description: 'deals 3 damage',
+    usableOn: 'enemy',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      const enemy = entities[element.id]
+      if (player.standingOn != enemy.standingOn) {
+        notify('Too far')
+        return
+      }
+      
+      const equippedItem = player.element.querySelector('.equipped-item')
+      
+      damageEntity(element.id, 3,
+        () => {
+          disableInventory()
+          playSound('swing-',2)
+          equippedItem.src = 'assets/images/dagger.png'
+          equippedItem.style.opacity = 1
+          player.element.style.left = '20%'
+          return 200
+        },
+        () => {
+          equippedItem.style.opacity = 0
+          player.element.style.left = '0%'
+          setTimeout(enableInventory, 200);
+        }
+      )
+
+      return 400
+    },
+    uses: 1,
   },
   apple: {
     image: 'assets/images/apple.png',
