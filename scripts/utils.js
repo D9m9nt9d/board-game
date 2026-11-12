@@ -45,9 +45,10 @@ function distanceBetweenInPixels(el1, el2) {
   return Math.hypot(dx, dy)
 }
 
-function playSound(name, variations, volume = 1) {
+function playSound(name, variations, volume, speed) {
   var audio = new Audio(`assets/sounds/${name}${variations?random(1, variations):''}.mp3`);
-  audio.volume = volume
+  audio.volume = volume ? volume : 1
+  audio.playbackRate = speed ? (1 + Math.random() * speed) : 1
   audio.play();
 }
 

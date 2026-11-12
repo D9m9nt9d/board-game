@@ -133,8 +133,9 @@ const entity_types = {
       tryAndAttackPlayer(entityId, playerId, 3)
     },
     onDied: (id, entity) => {
-      if (entity.standingOn != entities[playerId].standingOn) { return }
-      if (random(1, 2) != 1) { return }
+      const player = entities[playerId]
+      if (player && (entity.standingOn != player.standingOn)) { return }
+      if (random(1, 3) == 1) { return }
       addItem('dagger')
     }
   },

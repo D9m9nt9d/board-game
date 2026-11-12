@@ -1,9 +1,10 @@
 // squares are spaces that you can step on that contain entities
 
 import { random, getId, randomFromArray, arrayRemove, notify, playSound } from "./utils.js"
-import { createEntity, removeEntity, enemies, damageEntity } from "./entities.js"
+import { createEntity, removeEntity, enemies, damageEntity, entities, entity_types } from "./entities.js"
 import { playerId } from "./main.js"
-import { addItem, item_types, items, reconcileItems, removeItem } from "./items.js"
+import { addItem, item_types, items, itemsToPickFrom, pickItem, reconcileItems, removeItem } from "./items.js"
+import { spinWheel } from "./wheel.js"
 
 const squares = {}
 
@@ -25,15 +26,11 @@ function addText(square, label, description) {
     <span class="description">${description}</span>`
 }
 
-function pickItem(items) {
-  const entries = Object.entries(items)
-  const total = entries.reduce((sum, [, weight]) => sum + weight, 0)
-
-  let roll = Math.random() * total
-  for (const [name, weight] of entries) {
-    roll -= weight
-    if (roll < 0) return name
-  }
+function addDiv(square, className) {
+  const div = document.createElement('div')
+  div.classList.add(className)
+  div.classList.add('full-square')
+  square.element.append(div)
 }
 
 let wonCD = false
@@ -45,12 +42,7 @@ const square_types = {
     chance: 100,
   },
   'spawner': {
-    func: (squareId, square) => {
-      const div = document.createElement('div')
-      div.classList.add('spawner')
-      div.classList.add('full-square')
-      square.element.append(div)
-    },
+    func: (_, square) => addDiv(square, 'spawner'),
     onStepped: (entityId, squareId) => {
       if (entityId != playerId) { return }
       createEntity(randomFromArray(enemies), squareId)
@@ -58,22 +50,11 @@ const square_types = {
     chance: 20,
   },
   'withEnemy': {
-    func: (squareId, square) => {
-      createEntity(randomFromArray(enemies), squareId)
-    },
+    func: (squareId, _) => createEntity(randomFromArray(enemies), squareId),
     chance: 32,
   },
   'withItem': {
     func: (squareId, square) => {
-      const itemsToPickFrom = {
-        'apple': 40,
-        'scissors': 15,
-        'rope': 15,
-        'coin': 15,
-        'nuke': 2,
-        'sneak': 2,
-        'amulet': 2,
-      }
       const randomItem = pickItem(itemsToPickFrom)
       const itemInfo = item_types[randomItem]
 
@@ -102,28 +83,51 @@ const square_types = {
   'heal': {
     func: (squareId, square) => {
       addText(square, 'Heal', 'Heals anyone that steps on it to full')
-      const div = document.createElement('div')
-      div.classList.add('heal')
-      div.classList.add('full-square')
-      square.element.append(div)
+      addDiv(square, 'heal')
     },
-    onStepped: (entityId, _) => {
-      damageEntity(entityId, -100)
-    },
-    chance: 5,
+    onStepped: (entityId, _) => damageEntity(entityId, -100),
+    chance: 2,
   },
   'dmg': {
     func: (squareId, square) => {
       addText(square, 'Bad square', "Randomly damages anyone that steps on this square")
-      const div = document.createElement('div')
-      div.classList.add('dmg')
-      div.classList.add('full-square')
-      square.element.append(div)
+      addDiv(square, 'dmg')
     },
-    onStepped: (entityId, _) => {
-      damageEntity(entityId, random(5, 25))
-    },
+    onStepped: (entityId, _) => damageEntity(entityId, random(5, 25)),
     chance: 3,
+  },
+  'good': {
+    func: (_, square) => {
+      addText(square, 'Good square', 'Spin a good wheel')
+      addDiv(square, 'good')
+      square.uses = random(1,3)
+    },
+    onStepped: (entityId, squareId) => {
+      const square = squares[squareId]
+      if (square.uses <= 0) return
+      if (entityId != playerId) return
+      spinWheel([
+        {display: 'Get an item', chance: 50, function: () => {
+          const itemName = randomFromArray(Object.keys(itemsToPickFrom))
+          addItem(itemName)
+          return `Got ${itemName}`
+        }},
+        {display: 'Heal to full', chance: 50, function: () => {
+          damageEntity(playerId, -1000)
+          return 'Healed to full'
+        }},
+        {display: '+5 Max HP', chance: 30, function: () => {
+          entity_types.player.maxHealth += 5
+          const player = entities[playerId]
+          if (!player) return
+          player.maxHealth += 5
+          damageEntity(playerId, -5)
+        }},
+      ])
+      square.uses = square.uses - 1
+      if (square.uses <= 0) square.element.querySelector('.good').remove()
+    },
+    chance: 5,
   },
   'win': {
     func: (squareId, square) => {

@@ -19,7 +19,7 @@ const item_types = {
       const player = entities[playerId]
       if (player.standingOn == element.id) { notify("You're already here"); return }
       if (!areConnected(player.standingOn, element.id)) { notify('Too far'); return }
-      
+
       const squareRow = squares[element.id].row
       if (squareRow > maxRow) { maxRow = squareRow }
 
@@ -59,7 +59,7 @@ const item_types = {
       damageEntity(element.id, 5,
         () => {
           disableInventory()
-          playSound('swing-',2)
+          playSound('swing-', 2)
           equippedItem.src = 'assets/images/sword.png'
           equippedItem.style.opacity = 1
           player.element.style.left = '40%'
@@ -87,13 +87,13 @@ const item_types = {
         notify('Too far')
         return
       }
-      
+
       const equippedItem = player.element.querySelector('.equipped-item')
-      
+
       damageEntity(element.id, 3,
         () => {
           disableInventory()
-          playSound('swing-',2)
+          playSound('swing-', 2)
           equippedItem.src = 'assets/images/dagger.png'
           equippedItem.style.opacity = 1
           player.element.style.left = '20%'
@@ -121,7 +121,7 @@ const item_types = {
         return
       }
 
-      playSound('apple-',3)
+      playSound('apple-', 3)
       damageEntity(playerId, -20)
       return true
     },
@@ -220,6 +220,28 @@ const item_types = {
     uses: 1,
     usableAfterDeath: true,
   },
+}
+
+const itemsToPickFrom = {
+  'apple': 40,
+  'scissors': 15,
+  'rope': 15,
+  'coin': 15,
+  'dagger': 4,
+  'nuke': 2,
+  'sneak': 2,
+  'amulet': 2,
+}
+
+function pickItem(items) {
+  const entries = Object.entries(items)
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0)
+
+  let roll = Math.random() * total
+  for (const [name, weight] of entries) {
+    roll -= weight
+    if (roll < 0) return name
+  }
 }
 
 let activeZone = null;
@@ -360,5 +382,6 @@ function enableInventory() {
 export {
   item_types, items,
   addItem, removeItem, reconcileItems,
-  disableInventory, enableInventory
+  itemsToPickFrom, pickItem,
+  disableInventory, enableInventory,
 }

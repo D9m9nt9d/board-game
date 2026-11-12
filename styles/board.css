@@ -47,6 +47,9 @@
 .dmg {
   background: rgba(255, 1, 1, 0.5);
 }
+.good {
+  background: rgba(10, 216, 58, 0.5);
+}
 .win {
   padding: 5px;
   border: 5px solid transparent;
@@ -179,6 +182,7 @@
 
 .paths {
   position:absolute;
+  background-color: transparent;
   inset:0;
   width:100%;
   height:100%;
