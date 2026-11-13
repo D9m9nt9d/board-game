@@ -3,7 +3,6 @@ console.log('main.js loading')
 import { generateMap, drawMap, generatePaths, drawPaths, squares } from './squares.js'
 import { createEntity } from './entities.js'
 import { addItem } from './items.js'
-import { spinWheel } from './wheel.js'
 
 // Items
 
@@ -17,7 +16,8 @@ addItem('sword')
 // addItem('amulet')
 // addItem('amulet')
 // addItem('coin')
-addItem('dagger')
+// addItem('dagger')
+addItem('staff')
 
 // Entities
 

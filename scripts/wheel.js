@@ -20,6 +20,8 @@ function justWheel(options = [
   let total = 0
   options.forEach(option => total += option.chance);
 
+  duration -= 250
+
   let roll = Math.random() * total;
   let winner = options[options.length - 1];
   for (const option of options) {
@@ -146,14 +148,39 @@ function justWheel(options = [
 }
 
 let wheelsSpined = 0
+let isSpinning = false
+const spinDelay = 500
+const spinQueue = []
 
 function spinWheel(options, duration) {
-  if (!duration) duration = Math.max(1000, 5000-wheelsSpined*777)
+  spinQueue.push({ options, duration })
+  if (!isSpinning) processQueue()
+}
+
+function processQueue() {
+  const next = spinQueue.shift()
+
+  if (!next) {
+    isSpinning = false
+    enableInventory()
+    return
+  }
+
+  isSpinning = true
+  disableInventory()
+
+  const duration = next.duration || Math.max(1000, 5000 - wheelsSpined * 777)
   wheelsSpined++
 
-  disableInventory()
-  justWheel(options, duration)
-  setTimeout(enableInventory, duration);
+  justWheel(next.options, duration)
+
+  setTimeout(() => {
+    if (spinQueue.length > 0) {
+      setTimeout(processQueue, spinDelay)
+    } else {
+      processQueue()
+    }
+  }, duration)
 }
 
 export {

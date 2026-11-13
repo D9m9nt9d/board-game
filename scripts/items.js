@@ -78,6 +78,47 @@ const item_types = {
     otherMoves: 1,
     notLoseable: true,
   },
+  staff: {
+    image: 'assets/images/staff.png',
+    description: 'deals 15 damage to others on the square',
+    usableOn: 'square',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+
+      if (distanceBetween(player.standingOn, element.id) > 1) {
+        notify('Too far')
+        return
+      }
+
+      const square = squares[element.id]
+      const equippedItem = player.element.querySelector('.equipped-item')
+
+      disableInventory()
+      equippedItem.src = 'assets/images/staff.png'
+      equippedItem.style.opacity = 1
+      player.element.style.bottom = '40%'
+      player.element.style.left = '-20%'
+      
+      playSound('fireball-', 3)
+
+      setTimeout(() => {
+        square.entities.forEach(entityId => {
+          if (entityId == playerId) return
+          damageEntity(entityId, 15)
+        });
+
+        equippedItem.style.opacity = 0
+        player.element.style.bottom = '0%'
+        player.element.style.left = '0%'
+        setTimeout(enableInventory, 500);
+      }, 500);
+      
+      return 1000
+    },
+    otherMoves: 1,
+    uses: 5,
+    notLoseable: true,
+  },
   dagger: {
     image: 'assets/images/dagger.png',
     description: 'deals 3 damage',

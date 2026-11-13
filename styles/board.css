@@ -149,7 +149,7 @@
 .entity-slot,
 .entity-slot-small {
   z-index: 6;
-  transition: opacity 200ms, left 200ms, right 200ms;
+  transition: opacity 200ms, left 200ms, right 200ms, bottom 500ms;
 }
 
 .entity {
@@ -161,7 +161,7 @@
   position: absolute;
   height: 45px;
   width: 45px;
-  transition: opacity 100ms, transform 400ms, right 400ms;
+  transition: opacity 100ms;
 }
 
 .health-label {

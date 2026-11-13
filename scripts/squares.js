@@ -51,6 +51,96 @@ function getRandomSquareAtRow(number) {
   return null;
 }
 
+const badWheel = [
+  {
+    display: 'Lose an item', chance: 30, function: () => {
+      let removedAnItem = false
+      for (const id in items) {
+        const itemName = items[id].type
+        const itemInfo = item_types[itemName]
+        if (!itemInfo.notLoseable) {
+          removedAnItem = itemName
+          removeItem(id)
+          break
+        }
+      }
+      if (removedAnItem) return `Removed ${removedAnItem}`
+      damageEntity(playerId, 20)
+      return 'No item to be removed, take 20 damage instead'
+    }
+  },
+  {
+    display: 'Take 15 damage', chance: 20, function: () => damageEntity(playerId, 15)
+  },
+  {
+    display: 'Take 30 damage', chance: 20, function: () => damageEntity(playerId, 30)
+  },
+  {
+    display: 'Return to start', chance: 2, function: () => moveEntity(playerId, getRandomSquareAtRow(1), true)
+  },
+  {
+    display: 'Go back 5 rows', chance: 10, function: () => {
+      const player = entities[playerId]
+      if (!player) return
+      const playerRow = squares[player.standingOn].row
+      moveEntity(playerId, getRandomSquareAtRow(playerRow - 5), true)
+    }
+  },
+  {
+    display: 'Spawn an enemy', chance: 30, function: () => {
+      const player = entities[playerId]
+      if (!player) return
+      createEntity(randomFromArray(enemies), player.standingOn)
+      return 'Spawned an enemy'
+    }
+  },
+  {
+    display: 'Spin +2', chance: 3, function: () => {
+      spinWheel(badWheel)
+      spinWheel(badWheel)
+    }
+  },
+]
+
+const goodWheel = [
+  {
+    display: 'Get an item', chance: 50, function: () => {
+      const itemName = randomFromArray(Object.keys(itemsToPickFrom))
+      addItem(itemName)
+      return `Got ${itemName}`
+    }
+  },
+  {
+    display: 'Heal to full', chance: 50, function: () => {
+      damageEntity(playerId, -1000)
+      return 'Healed to full'
+    }
+  },
+  {
+    display: '+5 Max HP', chance: 30, function: () => {
+      entity_types.player.maxHealth += 5
+      const player = entities[playerId]
+      if (!player) return
+      player.maxHealth += 5
+      damageEntity(playerId, -5)
+    }
+  },
+  {
+    display: 'Go forward 5 rows', chance: 10, function: () => {
+      const player = entities[playerId]
+      if (!player) return
+      const playerRow = squares[player.standingOn].row
+      moveEntity(playerId, getRandomSquareAtRow(playerRow + 5), true)
+    }
+  },
+  {
+    display: 'Spin +2', chance: 3, function: () => {
+      spinWheel(goodWheel)
+      spinWheel(goodWheel)
+    }
+  },
+]
+
 let wonCD = false
 
 // 100 = always, 1 = 1/100
@@ -121,50 +211,7 @@ const square_types = {
     },
     onStepped: (entityId, squareId) => {
       if (entityId != playerId) return
-      spinWheel([
-        {
-          display: 'Lose an item', chance: 30, function: () => {
-            let removedAnItem = false
-            for (const id in items) {
-              const itemName = items[id].type
-              const itemInfo = item_types[itemName]
-              if (!itemInfo.notLoseable) {
-                removedAnItem = itemName
-                removeItem(id)
-                break
-              }
-            }
-            if (removedAnItem) return `Removed ${removedAnItem}`
-            damageEntity(playerId, 20)
-            return 'No item to be removed, take 20 damage instead'
-          }
-        },
-        {
-          display: 'Take 15 damage', chance: 20, function: () => damageEntity(playerId, 15)
-        },
-        {
-          display: 'Take 30 damage', chance: 20, function: () => damageEntity(playerId, 30)
-        },
-        {
-          display: 'Return to start', chance: 2, function: () => {
-            moveEntity(playerId, getRandomSquareAtRow(1), true)
-          }
-        },
-        {
-          display: 'Go back 5 rows', chance: 10, function: () => {
-            const player = entities[playerId]
-            if (!player) return
-            const playerRow = squares[player.standingOn].row
-            moveEntity(playerId, getRandomSquareAtRow(playerRow - 5), true)
-          }
-        },
-        {
-          display: 'Spawn an enemy', chance: 30, function: () => {
-            createEntity(randomFromArray(enemies), squareId)
-            return 'Spawned an enemy'
-          }
-        },
-      ])
+      spinWheel(badWheel)
       return true
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.bad').remove(),
@@ -178,38 +225,7 @@ const square_types = {
     },
     onStepped: (entityId, squareId) => {
       if (entityId != playerId) return
-      spinWheel([
-        {
-          display: 'Get an item', chance: 50, function: () => {
-            const itemName = randomFromArray(Object.keys(itemsToPickFrom))
-            addItem(itemName)
-            return `Got ${itemName}`
-          }
-        },
-        {
-          display: 'Heal to full', chance: 50, function: () => {
-            damageEntity(playerId, -1000)
-            return 'Healed to full'
-          }
-        },
-        {
-          display: '+5 Max HP', chance: 30, function: () => {
-            entity_types.player.maxHealth += 5
-            const player = entities[playerId]
-            if (!player) return
-            player.maxHealth += 5
-            damageEntity(playerId, -5)
-          }
-        },
-        {
-          display: 'Go forward 5 rows', chance: 10, function: () => {
-            const player = entities[playerId]
-            if (!player) return
-            const playerRow = squares[player.standingOn].row
-            moveEntity(playerId, getRandomSquareAtRow(playerRow + 5), true)
-          }
-        },
-      ])
+      spinWheel(goodWheel)
       return true
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
@@ -225,17 +241,17 @@ const square_types = {
       if (entityId != playerId) return
       spinWheel([
         {
-          display: 'Sharpen sword', chance: 5, function: () => {}
+          display: 'Sharpen sword', chance: 5, function: () => { }
         },
         {
-          display: 'Nothing', chance: 95, function: () => {}
+          display: 'Nothing', chance: 95, function: () => { }
         },
       ])
       return true
     },
     maxUses: 1,
     onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
-    chance: 5,
+    chance: 2,
   },
   'win': {
     func: (squareId, square) => {
@@ -285,19 +301,19 @@ function addType(squareId, type) {
   }
 
   const maxUses = typeInfo.maxUses
-  const uniqueUses = type+'USES'
+  const uniqueUses = type + 'USES'
   if (maxUses) square[uniqueUses] = random(typeInfo.minUses || 1, maxUses)
-  
-  const onStepped = 
-  maxUses 
-  ? ((entityId, squareId) => {
-    if (square[uniqueUses] <= 0) return
-    const success = typeInfo.onStepped(entityId, squareId)
-    if (!success) return
-    square[uniqueUses] = square[uniqueUses] - 1
-    if (square[uniqueUses] <= 0) typeInfo.onUsesEnded(squareId, square)
-  })
-  : typeInfo.onStepped
+
+  const onStepped =
+    maxUses
+      ? ((entityId, squareId) => {
+        if (square[uniqueUses] <= 0) return
+        const success = typeInfo.onStepped(entityId, squareId)
+        if (!success) return
+        square[uniqueUses] = square[uniqueUses] - 1
+        if (square[uniqueUses] <= 0) typeInfo.onUsesEnded(squareId, square)
+      })
+      : typeInfo.onStepped
 
   typeInfo.func && typeInfo.func(squareId, square)
   onStepped && square.onStepped.push(onStepped)
