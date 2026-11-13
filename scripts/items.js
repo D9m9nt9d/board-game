@@ -113,7 +113,7 @@ const item_types = {
         const [startPos, endPos] = getStartEndPos(board, player.element, element)
 
         fireball.animate(
-          [ { transform: startPos }, { transform: endPos } ],
+          [{ transform: startPos }, { transform: endPos }],
           { duration: time, easing: 'ease-in', fill: 'forwards' }
         ).onfinish = () => fireball.remove()
 
@@ -194,8 +194,36 @@ const item_types = {
     description: 'removes a space',
     usableOn: 'square',
     onUse: (element, item) => {
-      playSound('loud-explosion-', 2, 0.7)
-      removeSquare(element.id)
+      const player = entities[playerId]
+      const distance = distanceBetweenInPixels(player.element, element)
+      if (distance > 900) {
+        notify('Too far')
+        return
+      }
+
+      const time = Math.max(300, distance * 2.5)
+
+      const fireball = document.createElement('img')
+      fireball.className = 'fireball'
+      fireball.src = 'assets/images/nuke.png'
+
+      const board = document.getElementById('board')
+      board.append(fireball)
+
+      const [startPos, endPos] = getStartEndPos(board, player.element, element)
+
+      fireball.animate(
+        [{ transform: startPos }, { transform: endPos }],
+        { duration: time, easing: 'ease-in', fill: 'forwards' }
+      ).onfinish = () => fireball.remove()
+
+      setTimeout(() => {
+        playSound('loud-explosion-', 2, 0.7)
+        setTimeout(() => {
+          removeSquare(element.id)
+        }, 100);
+      }, time - 100);
+
       return true
     },
     uses: 1,

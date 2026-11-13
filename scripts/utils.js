@@ -67,7 +67,11 @@ function getStartEndPos(board, el1, el2) {
   start.y -= p.height / 2 + 65 // 65px above
   const end = centerIn(s)
 
-  const pos = ({ x, y }) => `translate(${x}px, ${y}px) translate(-50%, -50%)`
+  // 0 = right, Math.PI/2 = down, Math.PI = left, -Math.PI/2 = up
+  const SPRITE_ANGLE = -Math.PI/2
+  const angle = Math.atan2(end.y - start.y, end.x - start.x) - SPRITE_ANGLE
+
+  const pos = ({ x, y }) => `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${angle}rad)`
 
   return [pos(start), pos(end)]
 }

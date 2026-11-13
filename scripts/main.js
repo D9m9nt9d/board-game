@@ -9,7 +9,7 @@ import { addItem } from './items.js'
 addItem('move')
 addItem('sword')
 // addItem('sneak')
-// addItem('nuke')
+addItem('nuke')
 // addItem('rope')
 // addItem('apple')
 // addItem('scissors')
