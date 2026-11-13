@@ -149,7 +149,7 @@
 .entity-slot,
 .entity-slot-small {
   z-index: 6;
-  transition: opacity 200ms, left 200ms, right 200ms, bottom 500ms;
+  transition: opacity 200ms, left 200ms, right 200ms, bottom 400ms;
 }
 
 .entity {
@@ -173,6 +173,22 @@
   color: #f0ca98;
   text-shadow: -1px -1px 0 #927856, 1px -1px 0 #927856, -1px 1px 0 #927856, 1px 1px 0 #927856;
   opacity: 1;
+}
+
+.fireball {
+  z-index: 7;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 90px;
+  height: 90px;
+  animation: fromTransparent .25s ease-out;
+}
+
+@keyframes fromTransparent {
+  from {
+    opacity: 0;
+  }
 }
 
 /* Items (hover) */

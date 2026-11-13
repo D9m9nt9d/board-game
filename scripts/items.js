@@ -1,7 +1,7 @@
 // Items are whats in your inventory and what you can use on squares or entities
 
 import { entities, damageEntity, moveEntity, everyoneMoves, createEntity } from './entities.js'
-import { distanceBetweenInPixels, getId, notify, playSound } from './utils.js'
+import { distanceBetweenInPixels, getId, getStartEndPos, notify, playSound } from './utils.js'
 import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
@@ -97,23 +97,42 @@ const item_types = {
       equippedItem.src = 'assets/images/staff.png'
       equippedItem.style.opacity = 1
       player.element.style.bottom = '40%'
-      player.element.style.left = '-20%'
-      
-      playSound('fireball-', 3)
+      if (player.standingOn == element.id) player.element.style.left = '-20%'
+
+      const distance = distanceBetweenInPixels(player.element, square.element)
+      const time = Math.max(300, distance * 2.5)
 
       setTimeout(() => {
-        square.entities.forEach(entityId => {
-          if (entityId == playerId) return
-          damageEntity(entityId, 15)
-        });
+        const fireball = document.createElement('img')
+        fireball.className = 'fireball'
+        fireball.src = 'assets/images/fireball.png'
 
-        equippedItem.style.opacity = 0
-        player.element.style.bottom = '0%'
-        player.element.style.left = '0%'
-        setTimeout(enableInventory, 500);
-      }, 500);
-      
-      return 1000
+        const board = document.getElementById('board')
+        board.append(fireball)
+
+        const [startPos, endPos] = getStartEndPos(board, player.element, element)
+
+        fireball.animate(
+          [ { transform: startPos }, { transform: endPos } ],
+          { duration: time, easing: 'ease-in', fill: 'forwards' }
+        ).onfinish = () => fireball.remove()
+
+        playSound('fireball-', 3)
+
+        setTimeout(() => {
+          square.entities.forEach(entityId => {
+            if (entityId == playerId) return
+            damageEntity(entityId, 15)
+          });
+
+          equippedItem.style.opacity = 0
+          player.element.style.bottom = '0%'
+          player.element.style.left = '0%'
+          setTimeout(enableInventory, 400);
+        }, time);
+      }, 300);
+
+      return 600 + time
     },
     otherMoves: 1,
     uses: 5,
