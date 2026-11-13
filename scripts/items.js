@@ -27,6 +27,7 @@ const item_types = {
       return true
     },
     otherMoves: 2,
+    notLoseable: true,
   },
   sneak: {
     image: 'assets/images/sneak.png',
@@ -75,6 +76,7 @@ const item_types = {
       return 400
     },
     otherMoves: 1,
+    notLoseable: true,
   },
   dagger: {
     image: 'assets/images/dagger.png',

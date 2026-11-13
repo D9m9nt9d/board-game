@@ -85,10 +85,10 @@ function justWheel(options = [
       ctx.fillStyle = '#fff'
       ctx.textAlign = 'right'
       ctx.textBaseline = 'middle'
-      const fontSize = Math.max(10, Math.min(24, R * slice.size * 0.45))
+      const fontSize = Math.max(10, Math.min(R * slice.size * 0.31, 22))
       ctx.font = `400 ${fontSize}px "Montserrat", sans-serif`
       let text = String(slice.option.display)
-      const maxWidth = R * 0.63
+      const maxWidth = R * 0.7
       while (text.length > 1 && ctx.measureText(text).width > maxWidth) text = text.slice(0, -2) + '…'
       ctx.fillText(text, R - 16, 1.5)
       ctx.restore()

@@ -202,17 +202,22 @@ function createEntity(type, squareId) {
   return id
 }
 
-function moveEntity(entityId, squareId) {
+function moveEntity(entityId, squareId, scroll) {
   const entity = entities[entityId]
   if (!entity) {
     console.warn('Invalid entity id: ' + entityId)
     return
   }
 
+  const newSquare = squares[squareId]
+  if (!newSquare) {
+    console.warn('Invalid square id: ' + squareId)
+    return
+  }
+
   const standingOn = squares[entity.standingOn]
   arrayRemove(standingOn.entities, entityId)
 
-  const newSquare = squares[squareId]
   entity.standingOn = squareId
   newSquare.entities.push(entityId)
 
@@ -222,6 +227,8 @@ function moveEntity(entityId, squareId) {
   setTimeout(() => {
     if (entity.element.isDead) { return }
     newSquare.element.append(entity.element)
+
+    if (scroll) entity.element.scrollIntoView({behavior: "smooth"})
 
     setTimeout(() => {
       entity.element.style.opacity = 1
@@ -290,7 +297,7 @@ function damageEntity(id, amount = 2,
 
   const time = before()
   setTimeout(() => {
-    setHealth(id, entity.health-amount, true)
+    setHealth(id, entity.health - amount, true)
     after()
   }, time);
 }

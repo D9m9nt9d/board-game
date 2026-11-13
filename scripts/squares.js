@@ -1,7 +1,7 @@
 // squares are spaces that you can step on that contain entities
 
 import { random, getId, randomFromArray, arrayRemove, notify, playSound } from "./utils.js"
-import { createEntity, removeEntity, enemies, damageEntity, entities, entity_types } from "./entities.js"
+import { createEntity, removeEntity, enemies, damageEntity, entities, entity_types, moveEntity } from "./entities.js"
 import { playerId } from "./main.js"
 import { addItem, item_types, items, itemsToPickFrom, pickItem, reconcileItems, removeItem } from "./items.js"
 import { spinWheel } from "./wheel.js"
@@ -12,7 +12,7 @@ const board = document.getElementById('board')
 
 function createBlankSquare() {
   const newSquare = document.createElement('div')
-  newSquare.innerHTML = '<div class="square-text"></div>'
+  newSquare.innerHTML = '<div class="text-container"></div>'
   newSquare.classList.add('square-default')
   newSquare.classList.add('square')
   newSquare.style.margin = `${random(20, 120)}px ${random(10, 70)}px ${random(20, 120)}px ${random(10, 70)}px`
@@ -21,9 +21,13 @@ function createBlankSquare() {
 }
 
 function addText(square, label, description) {
-  square.element.querySelector('.square-text').innerHTML += `
+  const squareText = document.createElement('div')
+  squareText.className = 'square-text'
+  squareText.innerHTML = `
     <span class="label">${label}</span>
     <span class="description">${description}</span>`
+  square.element.querySelector('.text-container').append(squareText)
+  return squareText
 }
 
 function addDiv(square, className) {
@@ -31,6 +35,20 @@ function addDiv(square, className) {
   div.classList.add(className)
   div.classList.add('full-square')
   square.element.append(div)
+}
+
+let maxRows = 10
+
+function getRandomSquareAtRow(number) {
+  for (let row = Math.max(1, number); row <= maxRows; row++) {
+    const matches = Object.keys(squares).filter(name => squares[name].row === row);
+
+    if (matches.length > 0) {
+      return matches[Math.floor(Math.random() * matches.length)];
+    }
+  }
+
+  return null;
 }
 
 let wonCD = false
@@ -47,11 +65,11 @@ const square_types = {
       if (entityId != playerId) { return }
       createEntity(randomFromArray(enemies), squareId)
     },
-    chance: 20,
+    chance: 14,
   },
   'withEnemy': {
     func: (squareId, _) => createEntity(randomFromArray(enemies), squareId),
-    chance: 32,
+    chance: 30,
   },
   'withItem': {
     func: (squareId, square) => {
@@ -78,7 +96,7 @@ const square_types = {
         document.getElementById(squareId + loot).remove()
       }
     },
-    chance: 14,
+    chance: 17,
   },
   'heal': {
     func: (squareId, square) => {
@@ -90,50 +108,139 @@ const square_types = {
   },
   'dmg': {
     func: (squareId, square) => {
-      addText(square, 'Bad square', "Randomly damages anyone that steps on this square")
+      addText(square, 'Damage', "Randomly damages anyone that steps on this square")
       addDiv(square, 'dmg')
     },
     onStepped: (entityId, _) => damageEntity(entityId, random(5, 25)),
-    chance: 3,
+    chance: 2,
+  },
+  'bad': {
+    func: (_, square) => {
+      addText(square, 'Bad square', 'Spin a bad wheel')
+      addDiv(square, 'bad')
+    },
+    onStepped: (entityId, squareId) => {
+      if (entityId != playerId) return
+      spinWheel([
+        {
+          display: 'Lose an item', chance: 30, function: () => {
+            let removedAnItem = false
+            for (const id in items) {
+              const itemName = items[id].type
+              const itemInfo = item_types[itemName]
+              if (!itemInfo.notLoseable) {
+                removedAnItem = itemName
+                removeItem(id)
+                break
+              }
+            }
+            if (removedAnItem) return `Removed ${removedAnItem}`
+            damageEntity(playerId, 20)
+            return 'No item to be removed, take 20 damage instead'
+          }
+        },
+        {
+          display: 'Take 15 damage', chance: 20, function: () => damageEntity(playerId, 15)
+        },
+        {
+          display: 'Take 30 damage', chance: 20, function: () => damageEntity(playerId, 30)
+        },
+        {
+          display: 'Return to start', chance: 2, function: () => {
+            moveEntity(playerId, getRandomSquareAtRow(1), true)
+          }
+        },
+        {
+          display: 'Go back 5 rows', chance: 10, function: () => {
+            const player = entities[playerId]
+            if (!player) return
+            const playerRow = squares[player.standingOn].row
+            moveEntity(playerId, getRandomSquareAtRow(playerRow - 5), true)
+          }
+        },
+        {
+          display: 'Spawn an enemy', chance: 30, function: () => {
+            createEntity(randomFromArray(enemies), squareId)
+            return 'Spawned an enemy'
+          }
+        },
+      ])
+      return true
+    },
+    onUsesEnded: (squareId, square) => square.element.querySelector('.bad').remove(),
+    maxUses: 3,
+    chance: 5,
   },
   'good': {
     func: (_, square) => {
       addText(square, 'Good square', 'Spin a good wheel')
       addDiv(square, 'good')
-      square.uses = random(1,3)
     },
     onStepped: (entityId, squareId) => {
-      const square = squares[squareId]
-      if (square.uses <= 0) return
       if (entityId != playerId) return
       spinWheel([
-        {display: 'Get an item', chance: 50, function: () => {
-          const itemName = randomFromArray(Object.keys(itemsToPickFrom))
-          addItem(itemName)
-          return `Got ${itemName}`
-        }},
-        {display: 'Heal to full', chance: 50, function: () => {
-          damageEntity(playerId, -1000)
-          return 'Healed to full'
-        }},
-        {display: '+5 Max HP', chance: 30, function: () => {
-          entity_types.player.maxHealth += 5
-          const player = entities[playerId]
-          if (!player) return
-          player.maxHealth += 5
-          damageEntity(playerId, -5)
-        }},
+        {
+          display: 'Get an item', chance: 50, function: () => {
+            const itemName = randomFromArray(Object.keys(itemsToPickFrom))
+            addItem(itemName)
+            return `Got ${itemName}`
+          }
+        },
+        {
+          display: 'Heal to full', chance: 50, function: () => {
+            damageEntity(playerId, -1000)
+            return 'Healed to full'
+          }
+        },
+        {
+          display: '+5 Max HP', chance: 30, function: () => {
+            entity_types.player.maxHealth += 5
+            const player = entities[playerId]
+            if (!player) return
+            player.maxHealth += 5
+            damageEntity(playerId, -5)
+          }
+        },
+        {
+          display: 'Go forward 5 rows', chance: 10, function: () => {
+            const player = entities[playerId]
+            if (!player) return
+            const playerRow = squares[player.standingOn].row
+            moveEntity(playerId, getRandomSquareAtRow(playerRow + 5), true)
+          }
+        },
       ])
-      square.uses = square.uses - 1
-      if (square.uses <= 0) square.element.querySelector('.good').remove()
+      return true
     },
+    onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
+    maxUses: 3,
+    chance: 5,
+  },
+  'swordSharpener': {
+    func: (_, square) => {
+      addText(square, 'Sword sharpening station', '5% chance to get +1 dmg')
+      addDiv(square, 'good')
+    },
+    onStepped: (entityId, squareId) => {
+      if (entityId != playerId) return
+      spinWheel([
+        {
+          display: 'Sharpen sword', chance: 5, function: () => {}
+        },
+        {
+          display: 'Nothing', chance: 95, function: () => {}
+        },
+      ])
+      return true
+    },
+    maxUses: 1,
+    onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
     chance: 5,
   },
   'win': {
     func: (squareId, square) => {
-      addText(square, 'Win', 'GG!')
+      addText(square, 'Win', 'GG!').classList.add('win-text')
       square.element.classList.add('win-outline')
-      square.element.querySelector('.square-text').classList.add('win-text')
       const div = document.createElement('div')
       div.classList.add('win')
       div.classList.add('full-square')
@@ -177,8 +284,23 @@ function addType(squareId, type) {
     console.warn('Invalid square id' + squareId)
   }
 
+  const maxUses = typeInfo.maxUses
+  const uniqueUses = type+'USES'
+  if (maxUses) square[uniqueUses] = random(typeInfo.minUses || 1, maxUses)
+  
+  const onStepped = 
+  maxUses 
+  ? ((entityId, squareId) => {
+    if (square[uniqueUses] <= 0) return
+    const success = typeInfo.onStepped(entityId, squareId)
+    if (!success) return
+    square[uniqueUses] = square[uniqueUses] - 1
+    if (square[uniqueUses] <= 0) typeInfo.onUsesEnded(squareId, square)
+  })
+  : typeInfo.onStepped
+
   typeInfo.func && typeInfo.func(squareId, square)
-  typeInfo.onStepped && square.onStepped.push(typeInfo.onStepped)
+  onStepped && square.onStepped.push(onStepped)
 }
 
 function createSquare(types = {}, row = 0) {
@@ -242,6 +364,8 @@ function generateMap(rows, min = 1, max = 4) {
       { length: count }, () => pickSquare()
     )
   }
+
+  maxRows = rows
 
   return generated
 }
