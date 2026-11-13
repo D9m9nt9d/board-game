@@ -104,14 +104,14 @@ const badWheel = [
 
 const goodWheel = [
   {
-    display: 'Get an item', chance: 50, function: () => {
+    display: 'Get an item', chance: 40, function: () => {
       const itemName = randomFromArray(Object.keys(itemsToPickFrom))
       addItem(itemName)
       return `Got ${itemName}`
     }
   },
   {
-    display: 'Heal to full', chance: 50, function: () => {
+    display: 'Heal to full', chance: 35, function: () => {
       damageEntity(playerId, -1000)
       return 'Healed to full'
     }
@@ -137,6 +137,12 @@ const goodWheel = [
     display: 'Spin +2', chance: 3, function: () => {
       spinWheel(goodWheel)
       spinWheel(goodWheel)
+    }
+  },
+  {
+    display: 'Get a magic staff', chance: 4, function: () => {
+      addItem('staff')
+      return 'Got a magic staff'
     }
   },
 ]
@@ -234,23 +240,32 @@ const square_types = {
   },
   'swordSharpener': {
     func: (_, square) => {
-      addText(square, 'Sword sharpening station', '5% chance to get +1 dmg')
-      addDiv(square, 'good')
+      addText(square, 'Sword sharpening station', '50% chance to get +1 dmg')
+      addDiv(square, 'sword-sharpener')
     },
     onStepped: (entityId, squareId) => {
       if (entityId != playerId) return
       spinWheel([
         {
-          display: 'Sharpen sword', chance: 5, function: () => { }
+          display: 'Sharpen sword', chance: 50, color: '#2d89eb', function: () => {
+            for (const id in items) {
+              const item = items[id]
+              if (item.type == 'sword') {
+                item.damage++
+                item.itemSlot.querySelector('.item-desc').textContent = `deals ${item.damage} damage, everyone moves 1 turn`
+              }
+            }
+            return 'Sharpened sword (+1 dmg)'
+          }
         },
         {
-          display: 'Nothing', chance: 95, function: () => { }
+          display: 'Nothing', chance: 50, color: '#a4b3c4', function: () => { }
         },
       ])
       return true
     },
     maxUses: 1,
-    onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
+    onUsesEnded: (squareId, square) => square.element.querySelector('.sword-sharpener').remove(),
     chance: 2,
   },
   'win': {
@@ -524,8 +539,8 @@ function distanceBetween(idOne, idTwo) {
   return Infinity
 }
 
-function areConnected(idOne, idTwo, between = 0) {
-  return distanceBetween(idOne, idTwo) === between + 1
+function areConnected(idOne, idTwo) {
+  return squares[idOne].connections.includes(idTwo)
 }
 
 export {

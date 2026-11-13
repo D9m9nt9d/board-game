@@ -64,6 +64,10 @@
   background: rgba(255, 77, 0, 0.5);
 }
 
+.sword-sharpener {
+  background: rgba(1, 98, 255, 0.5);
+}
+
 .win {
   padding: 5px;
   border: 5px solid transparent;

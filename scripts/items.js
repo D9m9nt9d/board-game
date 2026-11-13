@@ -57,7 +57,7 @@ const item_types = {
 
       const equippedItem = player.element.querySelector('.equipped-item')
 
-      damageEntity(element.id, 5,
+      damageEntity(element.id, item.damage,
         () => {
           disableInventory()
           playSound('swing-', 2)
@@ -74,6 +74,9 @@ const item_types = {
       )
 
       return 400
+    },
+    onCreated: (item) => {
+      item.damage = 5
     },
     otherMoves: 1,
     notLoseable: true,
@@ -318,9 +321,9 @@ const itemsToPickFrom = {
   'rope': 15,
   'coin': 15,
   'dagger': 4,
-  'nuke': 2,
-  'sneak': 2,
-  'amulet': 2,
+  'nuke': 3,
+  'sneak': 3,
+  'amulet': 3,
 }
 
 function pickItem(items) {
@@ -374,11 +377,38 @@ function addItem(name) {
 
   const id = 'ITEM' + getId()
 
-  const item = itemSlot.querySelector('img')
-  item.id = id
+  const itemImg = itemSlot.querySelector('img')
+  itemImg.id = id
+
+  const item = {
+    type: name,
+    uses: itemInfo.uses,
+    itemSlot: itemSlot,
+    dragRef: hcgDraggable(itemImg, {
+      revert: true,
+      bringToFront: false,
+      onStart: function (e) {
+        e.target.style.position = 'fixed'; // ignores inv overflow
+        zoneName = itemInfo.usableOn
+      },
+      onMove: function (e) {
+        setActive(zoneAt(e)); // make outline
+      },
+      onEnd: function (e) {
+        e.target.style.position = 'absolute';
+
+        const zone = zoneAt(e);
+        setActive(null); // clear outline
+
+        if (e.moved && zone) itemUsed(zone)
+      }
+    })
+  }
+
+  if (itemInfo.onCreated) itemInfo.onCreated(item)
 
   function itemUsed(zone) {
-    console.log(`${item.id} was used on ${zone.id}`)
+    console.log(`${itemImg.id} was used on ${zone.id}`)
 
     if (!itemInfo.usableAfterDeath && !entities[playerId]) {
       notify("You can't use this when you are dead")
@@ -403,35 +433,12 @@ function addItem(name) {
         actualItem.uses = uses
         actualItem.itemSlot.querySelector('.item-desc').textContent = itemInfo.description + formatUses(uses)
       } else {
-        removeItem(item.id)
+        removeItem(itemImg.id)
       }
     }
   }
 
-  items[id] = {
-    type: name,
-    uses: itemInfo.uses,
-    itemSlot: itemSlot,
-    dragRef: hcgDraggable(item, {
-      revert: true,
-      bringToFront: false,
-      onStart: function (e) {
-        e.target.style.position = 'fixed'; // ignores inv overflow
-        zoneName = itemInfo.usableOn
-      },
-      onMove: function (e) {
-        setActive(zoneAt(e)); // make outline
-      },
-      onEnd: function (e) {
-        e.target.style.position = 'absolute';
-
-        const zone = zoneAt(e);
-        setActive(null); // clear outline
-
-        if (e.moved && zone) itemUsed(zone)
-      }
-    })
-  }
+  items[id] = item
 
   return id
 }
