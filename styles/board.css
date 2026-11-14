@@ -190,7 +190,7 @@
 }
 
 .fireball {
-  z-index: 7;
+  z-index: 53;
   position: absolute;
   left: 0;
   top: 0;
@@ -222,7 +222,6 @@
   outline-offset: 2px;
   transition: outline-color 0.1s;
 }
-
 .entity.hover {
   outline-color: rgb(255, 255, 255);
 }
@@ -230,9 +229,18 @@
 .connection {
   transition: stroke 0.1s;
 }
-
 .connection.hover {
   stroke: #4b0a0a;
+}
+
+.well {
+  outline: 2px solid transparent;
+  border-radius: 10px;
+  outline-offset: 0px;
+  transition: outline-color 0.1s;
+}
+.well.hover {
+  outline-color: rgb(228, 206, 176);
 }
 
 .paths {

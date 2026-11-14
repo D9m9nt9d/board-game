@@ -110,7 +110,7 @@ const entity_types = {
         entity 
         alive
         enemy
-        goblin
+        coinUse
       " draggable=false></img>
       <span class="health-label"></span>
       <img src="assets/images/dagger.png" class="equipped-item" draggable=false style="opacity:1"></img>

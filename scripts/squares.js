@@ -147,6 +147,21 @@ const goodWheel = [
   },
 ]
 
+export function addStaffChanceInGoodWheel(amount) {
+  goodWheel[goodWheel.length-1].chance += amount
+}
+
+export function addSpinGoodWheelChanceToBadWheel(amount) {
+  const lastOption = badWheel[badWheel.length - 1]
+  if (lastOption.display != 'Spin good wheel') {
+    badWheel.push({
+      display: 'Spin good wheel', chance: amount, function: () => spinWheel(goodWheel)
+    })
+  } else {
+    lastOption.chance += amount
+  }
+}
+
 let wonCD = false
 
 // 100 = always, 1 = 1/100
@@ -222,7 +237,7 @@ const square_types = {
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.bad').remove(),
     maxUses: 3,
-    chance: 5,
+    chance: 50,
   },
   'good': {
     func: (_, square) => {
@@ -236,7 +251,7 @@ const square_types = {
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
     maxUses: 3,
-    chance: 5,
+    chance: 50,
   },
   'swordSharpener': {
     func: (_, square) => {
@@ -258,9 +273,7 @@ const square_types = {
             return 'Sharpened sword (+1 dmg)'
           }
         },
-        {
-          display: 'Nothing', chance: 50, color: '#a4b3c4', function: () => { }
-        },
+        { display: 'Nothing', chance: 50, color: '#a4b3c4', function: () => { } },
       ])
       return true
     },
@@ -269,19 +282,16 @@ const square_types = {
     chance: 2,
   },
   'well': {
-    func: (_, square) => {
+    func: (squareId, square) => {
       const well = document.createElement('img')
       well.type = 'well'
-      well.className = 'well'
-      well.classList.add('coinUse')
+      well.standingOn = squareId
+      well.className = 'well coinUse'
       well.draggable = false
       well.src = 'assets/images/well.png'
       square.element.append(well)
     },
-    onStepped: (entityId, squareId) => {
-      
-    },
-    chance: 20,
+    chance: 50,
   },
   'win': {
     func: (squareId, square) => {

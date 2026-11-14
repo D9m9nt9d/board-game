@@ -1,8 +1,8 @@
 // Items are whats in your inventory and what you can use on squares or entities
 
 import { entities, damageEntity, moveEntity, everyoneMoves, createEntity } from './entities.js'
-import { distanceBetweenInPixels, getId, getStartEndPos, notify, playSound } from './utils.js'
-import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween } from './squares.js'
+import { distanceBetweenInPixels, getId, getStartEndPos, notify, playSound, randomFromArray } from './utils.js'
+import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween, addStaffChanceInGoodWheel, addSpinGoodWheelChanceToBadWheel } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
 import { spinWheel } from './wheel.js'
@@ -116,7 +116,7 @@ const item_types = {
           () => {
             disableInventory()
             playSound('swing-', 2)
-            equippedItem.src = 'assets/images/sword.png'
+            equippedItem.src = 'assets/images/random-sword.png'
             equippedItem.style.opacity = 1
             player.element.style.left = '40%'
             return 200
@@ -325,11 +325,32 @@ const item_types = {
   },
   coin: {
     image: 'assets/images/coin.png',
-    description: "use this to befriend a goblin (it won't attack you)",
-    usableOn: 'goblin',
+    description: "use this to befriend a goblin or in a well",
+    usableOn: 'coinUse',
     onUse: (element, item) => {
-      const entity = entities[element.id]
       const player = entities[playerId]
+      
+      if (element.type === 'well') {
+        if (!(player.standingOn == element.standingOn)) {
+          notify('Too far')
+          return
+        }
+
+        playSound('coin')
+
+        const boost = randomFromArray([
+          ['+5% STAFF CHANCE in good wheels', () => addStaffChanceInGoodWheel(6)],
+          ['+5% GOOD WHEEL CHANCE in bad wheels', () => addSpinGoodWheelChanceToBadWheel(6)],
+          ['nothing happens', () => {}],
+        ])
+
+        notify(boost[0])
+        boost[1]()
+
+        return true
+      }
+
+      const entity = entities[element.id]
       if (!(player.standingOn == entity.standingOn) && !areConnected(player.standingOn, entity.standingOn)) {
         notify('Too far')
         return
