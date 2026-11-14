@@ -68,6 +68,16 @@
   background: rgba(1, 98, 255, 0.5);
 }
 
+.well {
+  z-index: 25;
+  width: 100px;
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  height: 100px;
+}
+
 .win {
   padding: 5px;
   border: 5px solid transparent;
@@ -91,7 +101,7 @@
 
 .item-small {
   position: absolute;
-  z-index: 5;
+  z-index: 30;
   width: 50px;
   height: 50px;
 }
@@ -152,7 +162,7 @@
 
 .entity-slot,
 .entity-slot-small {
-  z-index: 6;
+  z-index: 50;
   transition: opacity 200ms, left 200ms, right 200ms, bottom 400ms;
 }
 

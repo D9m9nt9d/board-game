@@ -1,6 +1,6 @@
 console.log('main.js loading')
 
-import { generateMap, drawMap, generatePaths, drawPaths, squares } from './squares.js'
+import { generateMap, drawMap, generatePaths, drawPaths } from './squares.js'
 import { createEntity } from './entities.js'
 import { addItem } from './items.js'
 
@@ -18,6 +18,7 @@ addItem('sword')
 // addItem('coin')
 // addItem('dagger')
 // addItem('staff')
+// addItem('random-sword')
 
 // Entities
 

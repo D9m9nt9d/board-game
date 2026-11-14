@@ -25,7 +25,7 @@ function addText(square, label, description) {
   squareText.className = 'square-text'
   squareText.innerHTML = `
     <span class="label">${label}</span>
-    <span class="description">${description}</span>`
+    <span class="description">${description || ''}</span>`
   square.element.querySelector('.text-container').append(squareText)
   return squareText
 }
@@ -165,7 +165,7 @@ const square_types = {
   },
   'withEnemy': {
     func: (squareId, _) => createEntity(randomFromArray(enemies), squareId),
-    chance: 30,
+    chance: 25,
   },
   'withItem': {
     func: (squareId, square) => {
@@ -192,7 +192,7 @@ const square_types = {
         document.getElementById(squareId + loot).remove()
       }
     },
-    chance: 17,
+    chance: 13,
   },
   'heal': {
     func: (squareId, square) => {
@@ -267,6 +267,21 @@ const square_types = {
     maxUses: 1,
     onUsesEnded: (squareId, square) => square.element.querySelector('.sword-sharpener').remove(),
     chance: 2,
+  },
+  'well': {
+    func: (_, square) => {
+      const well = document.createElement('img')
+      well.type = 'well'
+      well.className = 'well'
+      well.classList.add('coinUse')
+      well.draggable = false
+      well.src = 'assets/images/well.png'
+      square.element.append(well)
+    },
+    onStepped: (entityId, squareId) => {
+      
+    },
+    chance: 20,
   },
   'win': {
     func: (squareId, square) => {
@@ -419,10 +434,10 @@ function drawMap(map) {
     board.append(row)
   }
 
-  window.scroll({
+  setTimeout(window.scroll, 50, {
     behavior: 'smooth',
     top: 0,
-  })
+  });
 
   return firstSquareId
 }

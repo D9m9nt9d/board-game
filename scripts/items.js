@@ -5,6 +5,7 @@ import { distanceBetweenInPixels, getId, getStartEndPos, notify, playSound } fro
 import { areConnected, removeSquare, connectSquares, drawPaths, squares, removePath, distanceBetween } from './squares.js'
 
 import { playerId, changePlayerId } from './main.js'
+import { spinWheel } from './wheel.js'
 
 const items = {}
 
@@ -80,6 +81,58 @@ const item_types = {
     },
     otherMoves: 1,
     notLoseable: true,
+  },
+  'random-sword': {
+    image: 'assets/images/random-sword.png',
+    description: 'deals 1-20 damage, everyone moves 1 turn',
+    usableOn: 'enemy',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      const enemy = entities[element.id]
+      if (player.standingOn != enemy.standingOn) {
+        notify('Too far')
+        return
+      }
+
+      disableInventory()
+
+      let damage = 1
+
+      const duration = 3000
+      const options = []
+      for (let i = 1; i <= 20; i++) {
+        options.push({
+          display: String(i),
+          chance: 10,
+          function: () => { damage = i }
+        })
+      }
+      spinWheel(options, duration)
+
+      setTimeout(() => {
+        const equippedItem = player.element.querySelector('.equipped-item')
+
+        damageEntity(element.id, damage,
+          () => {
+            disableInventory()
+            playSound('swing-', 2)
+            equippedItem.src = 'assets/images/sword.png'
+            equippedItem.style.opacity = 1
+            player.element.style.left = '40%'
+            return 200
+          },
+          () => {
+            equippedItem.style.opacity = 0
+            player.element.style.left = '0%'
+            setTimeout(enableInventory, 200);
+          }
+        )
+      }, duration + 600);
+
+      return duration + 1000
+    },
+    otherMoves: 1,
+    uses: 3,
   },
   staff: {
     image: 'assets/images/staff.png',
@@ -316,14 +369,15 @@ const item_types = {
 }
 
 const itemsToPickFrom = {
-  'apple': 40,
-  'scissors': 15,
-  'rope': 15,
-  'coin': 15,
-  'dagger': 4,
   'nuke': 3,
   'sneak': 3,
   'amulet': 3,
+  'random-sword': 4,
+  'dagger': 4,
+  'coin': 12,
+  'rope': 5,
+  'scissors': 5,
+  'apple': 12,
 }
 
 function pickItem(items) {
