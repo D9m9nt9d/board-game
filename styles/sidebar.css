@@ -16,11 +16,13 @@
 }
 
 #inventory-label {
-  margin-top: 15vh;
+  margin-top: 4vh;
   margin-bottom: 1vh;
 }
 
 #inventory {
+  /* background-color: rgb(35, 24, 14); */
+  flex-grow: .8;
   height: 400px;
   width: 180px;
   padding-left: 10px;

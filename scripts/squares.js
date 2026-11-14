@@ -148,7 +148,7 @@ const goodWheel = [
 ]
 
 export function addStaffChanceInGoodWheel(amount) {
-  goodWheel[goodWheel.length-1].chance += amount
+  goodWheel[goodWheel.length - 1].chance += amount
 }
 
 export function addSpinGoodWheelChanceToBadWheel(amount) {
@@ -237,7 +237,7 @@ const square_types = {
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.bad').remove(),
     maxUses: 3,
-    chance: 50,
+    chance: 5,
   },
   'good': {
     func: (_, square) => {
@@ -251,7 +251,7 @@ const square_types = {
     },
     onUsesEnded: (squareId, square) => square.element.querySelector('.good').remove(),
     maxUses: 3,
-    chance: 50,
+    chance: 5,
   },
   'swordSharpener': {
     func: (_, square) => {
@@ -291,7 +291,7 @@ const square_types = {
       well.src = 'assets/images/well.png'
       square.element.append(well)
     },
-    chance: 50,
+    chance: 1,
   },
   'win': {
     func: (squareId, square) => {
@@ -444,10 +444,20 @@ function drawMap(map) {
     board.append(row)
   }
 
-  setTimeout(window.scroll, 50, {
-    behavior: 'smooth',
-    top: 0,
-  });
+  // smoothly scroll to the top 100% of the times (i hope)
+  history.scrollRestoration = 'manual'
+  window.addEventListener('pagehide', () => {
+    try { sessionStorage.setItem('scrollY', String(window.scrollY)) } catch { }
+  })
+
+  let saved = 0
+  try { saved = Number(sessionStorage.getItem('scrollY')) || 0 } catch { }
+
+  window.scrollTo({ top: saved, behavior: 'instant' })
+  setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, 50)
+
 
   return firstSquareId
 }

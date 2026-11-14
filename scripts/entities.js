@@ -77,6 +77,12 @@ const entity_types = {
     onTurn: (entityId, playerId) => {
       tryAndAttackPlayer(entityId, playerId, 5)
     },
+    onDied: (id, entity) => {
+      const player = entities[playerId]
+      if (player && (entity.standingOn != player.standingOn)) { return }
+      if (random(1, 3) != 1) { return }
+      addItem('coin')
+    }
   },
   snake: {
     create: () => {

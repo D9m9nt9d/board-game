@@ -392,7 +392,7 @@ const item_types = {
 const itemsToPickFrom = {
   'nuke': 3,
   'sneak': 3,
-  'amulet': 3,
+  'amulet': 2,
   'random-sword': 4,
   'dagger': 4,
   'coin': 12,
