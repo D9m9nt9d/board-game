@@ -179,7 +179,10 @@ const square_types = {
     chance: 14,
   },
   'withEnemy': {
-    func: (squareId, _) => createEntity(randomFromArray(enemies), squareId),
+    func: (squareId, _) => {
+      if (random(1,30) == 1) createEntity('ratwizard', squareId)
+      else createEntity(randomFromArray(enemies), squareId)
+    },
     chance: 25,
   },
   'withItem': {

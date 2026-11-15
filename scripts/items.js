@@ -16,6 +16,8 @@ const item_types = {
     image: 'assets/images/move.png',
     description: 'drag this onto the square you want to move to',
     usableOn: 'square',
+    onDragStart: showPossibleMoves,
+    onDragEnd: hidePossibleMoves,
     onUse: (element, item) => {
       const player = entities[playerId]
       if (player.standingOn == element.id) { notify("You're already here"); return }
@@ -34,6 +36,8 @@ const item_types = {
     image: 'assets/images/sneak.png',
     description: 'sneak past enemies',
     usableOn: 'square',
+    onDragStart: showPossibleMoves,
+    onDragEnd: hidePossibleMoves,
     onUse: (element, item) => {
       const player = entities[playerId]
       if (player.standingOn == element.id) { notify("You're already here"); return }
@@ -281,6 +285,38 @@ const item_types = {
     },
     uses: 1,
   },
+  'medkit': {
+    image: 'assets/images/medkit.png',
+    description: 'heals for 0-50 health',
+    usableOn: 'player',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      if (player.health >= player.maxHealth) {
+        notify('Already at full health')
+        return
+      }
+
+      let heal = 1
+
+      const duration = 3000
+      const options = []
+      for (let i = 0; i <= 50; i = i + 5) {
+        options.push({
+          display: String(i),
+          chance: 10,
+          function: () => { heal = i }
+        })
+      }
+      spinWheel(options, duration)
+
+      setTimeout(() => {
+        damageEntity(playerId, -heal)
+      }, duration + 600);
+
+      return duration + 600
+    },
+    uses: 1,
+  },
   nuke: {
     image: 'assets/images/nuke.png',
     description: 'removes a space',
@@ -365,7 +401,7 @@ const item_types = {
     usableOn: 'coinUse',
     onUse: (element, item) => {
       const player = entities[playerId]
-      
+
       if (element.type === 'well') {
         if (!(player.standingOn == element.standingOn)) {
           notify('Too far')
@@ -377,7 +413,7 @@ const item_types = {
         const boost = randomFromArray([
           ['+5% STAFF CHANCE in good wheels', () => addStaffChanceInGoodWheel(6)],
           ['+5% GOOD WHEEL CHANCE in bad wheels', () => addSpinGoodWheelChanceToBadWheel(6)],
-          ['nothing happens', () => {}],
+          ['nothing happens', () => { }],
         ])
 
         notify(boost[0])
@@ -434,6 +470,7 @@ const itemsToPickFrom = {
   'coin': 12,
   'rope': 5,
   'scissors': 5,
+  'medkit': 3,
   'apple': 12,
 }
 
@@ -446,6 +483,20 @@ function pickItem(items) {
     roll -= weight
     if (roll < 0) return name
   }
+}
+
+function showPossibleMoves() {
+  const player = entities[playerId]
+  if (!player) return
+  const standingOn = squares[player.standingOn]
+  standingOn.connections.forEach(squareId => squares[squareId].element.classList.add('able'))
+}
+
+function hidePossibleMoves() {
+  const player = entities[playerId]
+  if (!player) return
+  const standingOn = squares[player.standingOn]
+  standingOn.connections.forEach(squareId => squares[squareId].element.classList.remove('able'))
 }
 
 let activeZone = null;
@@ -499,6 +550,7 @@ function addItem(name) {
       revert: true,
       bringToFront: false,
       onStart: function (e) {
+        if (itemInfo.onDragStart) itemInfo.onDragStart()
         e.target.style.position = 'fixed'; // ignores inv overflow
         zoneName = itemInfo.usableOn
       },
@@ -506,6 +558,7 @@ function addItem(name) {
         setActive(zoneAt(e)); // make outline
       },
       onEnd: function (e) {
+        if (itemInfo.onDragEnd) itemInfo.onDragEnd()
         e.target.style.position = 'absolute';
 
         const zone = zoneAt(e);

@@ -1,7 +1,7 @@
 // entities are anything that is on the square
 
-import { random, getId, arrayRemove, clamp, notify, playSound } from "./utils.js"
-import { squares, areConnected, distanceBetween } from "./squares.js"
+import { random, getId, arrayRemove, clamp, notify, playSound, randomFromArray } from "./utils.js"
+import { squares, areConnected, distanceBetween, getRandomSquareAtRow } from "./squares.js"
 import { addItem, disableInventory, enableInventory, item_types, items, pickItem } from "./items.js"
 import { playerId } from "./main.js"
 
@@ -150,6 +150,85 @@ const entity_types = {
       addItem('dagger')
     }
   },
+  ratwizard: {
+    create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot')
+      element.classList.add('right')
+      element.innerHTML = `<img src="assets/images/rat-wizard.png" class="
+        entity 
+        alive
+        enemy
+      " draggable=false></img>
+      <span class="health-label"></span>
+      `
+
+      element.style.margin = `${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px`
+
+      return element
+    },
+    maxHealth: 18,
+    onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      const entity = entities[entityId]
+      const player = entities[playerId]
+      if (!player) return
+
+      if (entity.standingOn == player.standingOn) {
+        if (random(1, 2) == 1) {
+          damageEntity(playerId, 5,
+            () => {
+              disableInventory()
+              playSound('swing-', 2)
+              entity.element.style.right = '40%'
+              return 200
+            },
+            () => {
+              entity.element.style.right = '0%'
+              setTimeout(enableInventory, 200);
+            }
+          )
+        } else {
+          const square = squares[entity.standingOn]
+          const squareId = random(1,2) == 1 ? (randomFromArray(square.connections) || entity.standingOn) : entity.standingOn
+          disableInventory()
+          entity.element.style.bottom = '30%'
+          setTimeout(() => {
+            for (let i = 2; i <= random(2,4); i++) createEntity('rat', squareId)
+            entity.element.style.bottom = '0%'
+            enableInventory()
+          }, 200);
+        }
+      } else if (areConnected(entity.standingOn, player.standingOn)) {
+        moveEntity(entityId, player.standingOn)
+      }
+    },
+  },
+  rat: {
+    create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot-small')
+      element.classList.add('right')
+      element.innerHTML = `<img src="assets/images/rat.png" class="
+        entity 
+        alive
+        enemy
+        rat
+      " draggable=false></img>
+      <span class="health-label"></span>
+      `
+
+      element.querySelector('.health-label').style.top = '30%';
+      element.style.margin = `0px ${random(-12, 40)}px ${random(-2, 25)}px 0px`
+
+      return element
+    },
+    maxHealth: 3,
+    onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      tryAndAttackPlayer(entityId, playerId, 2, 0.2)
+    },
+  },
   veryevilguy: {
     create: () => {
       const element = document.createElement('div')
@@ -201,7 +280,7 @@ const entity_types = {
       if (player && (entity.standingOn != player.standingOn)) { return }
 
 
-      
+
     }
   },
   bigzomb: {
@@ -277,15 +356,16 @@ function defaultOnDmged(id, entity) {
   healthLabel.textContent = `${entity.health}/${entity.maxHealth}`
 }
 
-function tryAndAttackPlayer(entityId, playerId, damage) {
+function tryAndAttackPlayer(entityId, playerId, damage, volume = 1) {
   const entity = entities[entityId]
   const player = entities[playerId]
+  if (!player) return
 
   if (entity.standingOn == player.standingOn) {
     damageEntity(playerId, damage,
       () => {
         disableInventory()
-        playSound('swing-', 2)
+        playSound('swing-', 2, volume)
         entity.element.style.right = '40%'
         return 200
       },

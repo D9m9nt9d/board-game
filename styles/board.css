@@ -209,6 +209,10 @@
   animation: fromTransparent .25s ease-out;
 }
 
+.rat {
+  animation: fromTransparent .25s ease-out;
+}
+
 @keyframes fromTransparent {
   from {
     opacity: 0;
@@ -222,10 +226,13 @@
   outline-offset: 2px;
   transition: outline-color 0.1s;
 }
-
+.square.able {
+  outline-color: rgb(89, 158, 236);
+}
 .square.hover {
   outline-color: dodgerblue;
 }
+
 
 .entity {
   outline: 2px dashed transparent;

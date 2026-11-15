@@ -54,18 +54,22 @@ createEntity('veryevilguy', getRandomSquareAtRow(75))
 // For testers
 function spawnBelowPlr(name) {
   const playerRow = squares[entities[playerId].standingOn].row
-    const randomId = getRandomSquareAtRow(playerRow + 2)
-    if (randomId) {
-      notify('Boss spawned')
-      createEntity(name, randomId)
-    } else {
-      notify('Failed to spawn boss')
-    }
+  const randomId = getRandomSquareAtRow(playerRow + 2)
+  if (randomId) {
+    notify('Boss spawned')
+    createEntity(name, randomId)
+  } else {
+    notify('Failed to spawn boss')
+  }
 }
 
 const codes = {
   'boss': () => spawnBelowPlr('veryevilguy'),
   'zombie': () => spawnBelowPlr('bigzomb'),
+  'rats': () => {
+    for (let i = 1; i <= 3; i++) spawnBelowPlr('rat')
+  },
+  'wizard': () => spawnBelowPlr('ratwizard'),
   'items': () => {
     reconcileItems()
     notify('Added items')
