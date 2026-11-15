@@ -31,8 +31,13 @@ const entity_types = {
     },
     maxHealth: 100,
     onHealthChanged: defaultOnDmged,
-    onDied: (id, entity) => {
+    onDied: (id, entity, message) => {
       setTimeout(() => {
+        if (message) {
+          notify(message)
+          return
+        }
+
         let itemsThatCanHelp = 0
         for (const id in items) {
           const item = items[id]
@@ -172,7 +177,7 @@ const entity_types = {
       const entity = entities[entityId]
       const [distance, nextSquare] = distanceBetween(entity.standingOn, player.standingOn)
 
-      if (distance > 10) return
+      if (distance > 7) return
 
       if (distance == 0) {
         damageEntity(playerId, 8,
@@ -185,7 +190,7 @@ const entity_types = {
           () => {
             entity.element.style.right = '0%'
             setTimeout(enableInventory, 200);
-          }
+          }, 'A nuke or some very good preparations could help against that guy'
         )
       } else {
         moveEntity(entityId, nextSquare)
@@ -300,7 +305,7 @@ function moveEntity(entityId, squareId, scroll) {
   }, 200);
 }
 
-function removeEntity(id, fireDie = true) {
+function removeEntity(id, fireDie = true, message) {
   const entity = entities[id]
   if (!entity) {
     console.warn('Invalid entity id: ' + id)
@@ -309,7 +314,7 @@ function removeEntity(id, fireDie = true) {
 
   if (fireDie) {
     const onDied = entity_types[entity.type].onDied
-    if (onDied) onDied(id, entity)
+    if (onDied) onDied(id, entity, message)
   }
 
   const standingOn = squares[entity.standingOn]
@@ -324,7 +329,7 @@ function removeEntity(id, fireDie = true) {
   delete entities[id]
 }
 
-function setHealth(id, amount, fireDie = true) {
+function setHealth(id, amount, fireDie = true, message) {
   const entity = entities[id]
   if (!entity) {
     console.warn('Invalid entity id: ' + id)
@@ -337,13 +342,14 @@ function setHealth(id, amount, fireDie = true) {
   if (onHpChanged) onHpChanged(id, entity)
 
   if (entity.health <= 0) {
-    removeEntity(id, fireDie)
+    removeEntity(id, fireDie, message)
   }
 }
 
 function damageEntity(id, amount = 2,
   before = () => { return 0 },
   after = () => { },
+  message,
 ) {
   const entity = entities[id]
   if (!entity) {
@@ -355,7 +361,7 @@ function damageEntity(id, amount = 2,
 
   const time = before()
   setTimeout(() => {
-    setHealth(id, entity.health - amount, true)
+    setHealth(id, entity.health - amount, true, message)
     after()
   }, time);
 }
