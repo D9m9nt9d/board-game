@@ -276,7 +276,7 @@ const item_types = {
       setTimeout(() => {
         playSound('loud-explosion-', 2, 0.7)
         setTimeout(() => {
-          removeSquare(element.id)
+          removeSquare(element.id, "Maybe that wasn't the best idea")
         }, 100);
       }, time - 100);
 

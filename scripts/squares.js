@@ -379,7 +379,7 @@ function createSquare(types = {}, row = 0) {
   return square
 }
 
-function removeSquare(id) {
+function removeSquare(id, message) {
   const square = squares[id]
   square.element.classList.remove('square')
   square.element.style.visibility = 'hidden'
@@ -390,7 +390,7 @@ function removeSquare(id) {
   })
 
   square.entities.forEach(id => {
-    removeEntity(id)
+    removeEntity(id, true, message)
   })
 
   delete squares[id]
