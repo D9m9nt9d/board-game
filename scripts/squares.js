@@ -281,6 +281,28 @@ const square_types = {
     onUsesEnded: (squareId, square) => square.element.querySelector('.sword-sharpener').remove(),
     chance: 2,
   },
+  'zomb': {
+    func: (_, square) => {
+      addText(square, '???')
+      addDiv(square, 'zombgreen')
+    },
+    onStepped: (entityId, squareId) => {
+      if (entityId != playerId) return
+      spinWheel([
+        {
+          display: '???', chance: 50, color: '#678d51', function: () => {
+            createEntity('bigzomb', squareId)
+            return 'Spawned zomb'
+          }
+        },
+        { display: 'Nothing', chance: 50, color: '#b0c4a4', function: () => { } },
+      ])
+      return true
+    },
+    maxUses: 1,
+    onUsesEnded: (squareId, square) => square.element.querySelector('.zombgreen').remove(),
+    chance: 1,
+  },
   'well': {
     func: (squareId, square) => {
       const well = document.createElement('img')
@@ -552,7 +574,7 @@ function drawPaths() {
 }
 
 function distanceBetween(idOne, idTwo) {
-  if (idOne === idTwo) return [ 0, idOne ]
+  if (idOne === idTwo) return [0, idOne]
 
   // maps each visited square -> the first step from idOne on the way to it
   const firstStep = new Map([[idOne, idOne]])
@@ -566,14 +588,14 @@ function distanceBetween(idOne, idTwo) {
       for (const n of squares[id].connections) {
         if (firstStep.has(n)) continue
         const step = id === idOne ? n : firstStep.get(id)
-        if (n === idTwo) return [ dist, step ]
+        if (n === idTwo) return [dist, step]
         firstStep.set(n, step)
         next.push(n)
       }
     }
     frontier = next
   }
-  return [ Infinity, null ]
+  return [Infinity, null]
 
   // const seen = new Set([idOne]) // array with no repetitions and has instead of includes
   // let frontier = [idOne]

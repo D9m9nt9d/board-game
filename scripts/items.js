@@ -82,6 +82,42 @@ const item_types = {
     otherMoves: 1,
     notLoseable: true,
   },
+  'rugged-sword': {
+    image: 'assets/images/rugged-sword.png',
+    description: 'deals 10 damage, everyone moves 1 turn',
+    usableOn: 'enemy',
+    onUse: (element, item) => {
+      const player = entities[playerId]
+      const enemy = entities[element.id]
+      if (player.standingOn != enemy.standingOn) {
+        notify('Too far')
+        return
+      }
+
+      const equippedItem = player.element.querySelector('.equipped-item')
+
+      damageEntity(element.id, 10,
+        () => {
+          disableInventory()
+          playSound('swing-', 2)
+          equippedItem.src = 'assets/images/rugged-sword.png'
+          equippedItem.style.opacity = 1
+          player.element.style.left = '40%'
+          return 200
+        },
+        () => {
+          equippedItem.style.opacity = 0
+          player.element.style.left = '0%'
+          setTimeout(enableInventory, 200);
+        }
+      )
+
+      return 400
+    },
+    uses: 10,
+    otherMoves: 1,
+    notLoseable: true,
+  },
   'random-sword': {
     image: 'assets/images/random-sword.png',
     description: 'deals 1-20 damage, everyone moves 1 turn',

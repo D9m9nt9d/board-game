@@ -68,6 +68,10 @@
   background: rgba(1, 98, 255, 0.5);
 }
 
+.zombgreen {
+  background: rgba(198, 245, 97, 0.5);
+}
+
 .well {
   z-index: 25;
   width: 100px;

@@ -2,7 +2,7 @@
 
 import { random, getId, arrayRemove, clamp, notify, playSound } from "./utils.js"
 import { squares, areConnected, distanceBetween } from "./squares.js"
-import { addItem, disableInventory, enableInventory, item_types, items } from "./items.js"
+import { addItem, disableInventory, enableInventory, item_types, items, pickItem } from "./items.js"
 import { playerId } from "./main.js"
 
 const entities = {}
@@ -200,8 +200,73 @@ const entity_types = {
       const player = entities[playerId]
       if (player && (entity.standingOn != player.standingOn)) { return }
 
+
+      
     }
-  }
+  },
+  bigzomb: {
+    create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot-big')
+      element.classList.add('right')
+      element.innerHTML = `<img src="assets/images/zombie-mutant.png" class="
+        entity 
+        alive
+        enemy
+      " draggable=false></img>
+      <span class="health-label"></span>
+      `
+
+      element.querySelector('.health-label').style.top = '10%';
+
+      element.style.transform = 'translate(18%, 0)'
+      element.style.margin = `${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px`
+
+      return element
+    },
+    maxHealth: 80,
+    onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      const player = entities[playerId]
+      if (!player) return
+
+      const entity = entities[entityId]
+      const [distance, nextSquare] = distanceBetween(entity.standingOn, player.standingOn)
+
+      if (distance > 3) return
+
+      if (distance == 0) {
+        damageEntity(playerId, 12,
+          () => {
+            disableInventory()
+            playSound('swing-', 2)
+            entity.element.style.right = '50%'
+            return 200
+          },
+          () => {
+            entity.element.style.right = '0%'
+            setTimeout(enableInventory, 200);
+          }, 'Well...'
+        )
+      } else {
+        moveEntity(entityId, nextSquare)
+      }
+    },
+    onDied: (id, entity) => {
+      const player = entities[playerId]
+      if (player && (entity.standingOn != player.standingOn)) { return }
+      const randomItem = pickItem({
+        'nuke': 5,
+        'sneak': 5,
+        'amulet': 4,
+        'coin': 2,
+        'apple': 2,
+      })
+      notify('Zombie dropped a rugged sword and ' + randomItem)
+      addItem('rugged-sword')
+      addItem(randomItem)
+    }
+  },
 }
 
 const enemies = ['evilman', 'goblin', 'snake']
