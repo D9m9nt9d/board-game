@@ -1,7 +1,7 @@
 // entities are anything that is on the square
 
 import { random, getId, arrayRemove, clamp, notify, playSound } from "./utils.js"
-import { squares, areConnected } from "./squares.js"
+import { squares, areConnected, distanceBetween } from "./squares.js"
 import { addItem, disableInventory, enableInventory, item_types, items } from "./items.js"
 import { playerId } from "./main.js"
 
@@ -145,6 +145,58 @@ const entity_types = {
       addItem('dagger')
     }
   },
+  veryevilguy: {
+    create: () => {
+      const element = document.createElement('div')
+      element.classList.add('entity-slot-big')
+      element.classList.add('right')
+      element.innerHTML = `<img src="assets/images/very-evil-man.png" class="
+        entity 
+        alive
+        enemy
+      " draggable=false></img>
+      <span class="health-label"></span>
+      `
+
+      element.style.transform = 'translate(10%, 0)'
+      element.style.margin = `${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px ${random(0, 10)}px`
+
+      return element
+    },
+    maxHealth: 150,
+    onHealthChanged: defaultOnDmged,
+    onTurn: (entityId, playerId) => {
+      const player = entities[playerId]
+      if (!player) return
+
+      const entity = entities[entityId]
+      const [distance, nextSquare] = distanceBetween(entity.standingOn, player.standingOn)
+
+      if (distance > 10) return
+
+      if (distance == 0) {
+        damageEntity(playerId, 8,
+          () => {
+            disableInventory()
+            playSound('swing-', 2)
+            entity.element.style.right = '40%'
+            return 200
+          },
+          () => {
+            entity.element.style.right = '0%'
+            setTimeout(enableInventory, 200);
+          }
+        )
+      } else {
+        moveEntity(entityId, nextSquare)
+      }
+    },
+    onDied: (id, entity) => {
+      const player = entities[playerId]
+      if (player && (entity.standingOn != player.standingOn)) { return }
+
+    }
+  }
 }
 
 const enemies = ['evilman', 'goblin', 'snake']
@@ -234,7 +286,7 @@ function moveEntity(entityId, squareId, scroll) {
     if (entity.element.isDead) { return }
     newSquare.element.append(entity.element)
 
-    if (scroll) entity.element.scrollIntoView({behavior: "smooth"})
+    if (scroll) entity.element.scrollIntoView({ behavior: "smooth" })
 
     setTimeout(() => {
       entity.element.style.opacity = 1

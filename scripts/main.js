@@ -1,6 +1,6 @@
 console.log('main.js loading')
 
-import { generateMap, drawMap, generatePaths, drawPaths } from './squares.js'
+import { generateMap, drawMap, generatePaths, drawPaths, getRandomSquareAtRow } from './squares.js'
 import { createEntity } from './entities.js'
 import { addItem } from './items.js'
 
@@ -46,5 +46,7 @@ window.addEventListener('resize', drawPaths)
 // Create player
 
 changePlayerId(createEntity('player', firstSquareId))
+
+createEntity('veryevilguy', getRandomSquareAtRow(75))
 
 console.log('main.js loaded')

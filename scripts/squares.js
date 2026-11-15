@@ -458,7 +458,6 @@ function drawMap(map) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, 50)
 
-
   return firstSquareId
 }
 
@@ -553,25 +552,48 @@ function drawPaths() {
 }
 
 function distanceBetween(idOne, idTwo) {
-  const seen = new Set([idOne]) // array with no repetitions and has instead of includes
+  if (idOne === idTwo) return [ 0, idOne ]
+
+  // maps each visited square -> the first step from idOne on the way to it
+  const firstStep = new Map([[idOne, idOne]])
   let frontier = [idOne]
   let dist = 0
 
   while (frontier.length) {
-    if (frontier.includes(idTwo)) return dist
+    dist++
     const next = []
     for (const id of frontier) {
       for (const n of squares[id].connections) {
-        if (!seen.has(n)) {
-          seen.add(n)
-          next.push(n)
-        }
+        if (firstStep.has(n)) continue
+        const step = id === idOne ? n : firstStep.get(id)
+        if (n === idTwo) return [ dist, step ]
+        firstStep.set(n, step)
+        next.push(n)
       }
     }
     frontier = next
-    dist++
   }
-  return Infinity
+  return [ Infinity, null ]
+
+  // const seen = new Set([idOne]) // array with no repetitions and has instead of includes
+  // let frontier = [idOne]
+  // let dist = 0
+
+  // while (frontier.length) {
+  //   if (frontier.includes(idTwo)) return dist
+  //   const next = []
+  //   for (const id of frontier) {
+  //     for (const n of squares[id].connections) {
+  //       if (!seen.has(n)) {
+  //         seen.add(n)
+  //         next.push(n)
+  //       }
+  //     }
+  //   }
+  //   frontier = next
+  //   dist++
+  // }
+  // return Infinity
 }
 
 function areConnected(idOne, idTwo) {
@@ -583,5 +605,5 @@ export {
   generateMap, drawMap,
   generatePaths, drawPaths, removePath,
   createSquare, removeSquare, connectSquares,
-  areConnected, distanceBetween,
+  areConnected, distanceBetween, getRandomSquareAtRow,
 }

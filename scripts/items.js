@@ -141,7 +141,7 @@ const item_types = {
     onUse: (element, item) => {
       const player = entities[playerId]
 
-      if (distanceBetween(player.standingOn, element.id) > 1) {
+      if (!(player.standingOn == element.id) && !areConnected(player.standingOn, element.id)) {
         notify('Too far')
         return
       }

@@ -150,6 +150,11 @@
   right: 0px
 }
 
+.entity-slot-big {
+  height: 120px;
+  width: 120px;
+}
+
 .entity-slot {
   height: 90px;
   width: 90px;
@@ -161,7 +166,8 @@
 }
 
 .entity-slot,
-.entity-slot-small {
+.entity-slot-small,
+.entity-slot-big {
   z-index: 50;
   transition: opacity 200ms, left 200ms, right 200ms, bottom 400ms;
 }
