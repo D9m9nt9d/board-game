@@ -516,7 +516,7 @@ function everyoneMoves(playerId, amount = 1) {
     const onTurn = entity_types[entities[id].type].onTurn
     if (!onTurn) continue
     for (let i = 1; i <= amount; i++) {
-      onTurn(id, playerId)
+      try { onTurn(id, playerId) } catch (e) { console.warn(e) }
     }
   }
 }
