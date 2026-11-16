@@ -8,4 +8,6 @@ Good and bad squares:<br>
 How the game should behave when you drag an item:<br>
 ![Image of the project](https://github.com/D9m9nt9d/board-game/blob/main/assets/readme/gs2.png)<br><br>
 How i built it:<br>
-I used HTML, CSS, and JavaScript. I divided the game into 3 main things: items, squares, entities. Each is it's own script and they are all connected with the main script. Used hcg-draggable library for dragging items.
+I used HTML, CSS, and JavaScript. I divided the game into 3 main things: items, squares, entities. Each is it's own script and they are all connected with the main script. Used hcg-draggable library for dragging items.<br><br>
+Why i made it:<br>
+To see if i can make a game directly in web and to practice making games that can be replayed for a different outcome each time.
